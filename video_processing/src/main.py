@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 import whisper
 from pytube import Playlist
@@ -61,37 +62,29 @@ def transcribe_audio_files():
     # Load the Whisper model
     model = whisper.load_model("tiny")  # You can choose another model size as needed
 
-    # Function to transcribe a segment of audio
-    def transcribe_segment(model, audio_path, start, end):
-        result = model.transcribe(audio_path, start=start, end=end)
-        return result["text"]
-
     # Process each MP3 file in the directory
-    for filename in os.listdir(audio_dir):
-        if filename.endswith(".mp3"):
-            file_path = os.path.join(audio_dir, filename)
-            output_path = os.path.join(output_dir, filename.replace(".mp3", ".txt"))
+    for filename in tqdm(os.listdir(audio_dir)):
+        if not filename.endswith(".mp3"):
+            continue
 
-            with open(output_path, "w") as output_file:
-                audio_info = whisper.load_audio(file_path)
-                audio_duration = whisper.get_audio_duration(audio_info)
-                start = 0
-                end = 60  # 1 minute in seconds
+        file_path = os.path.join(audio_dir, filename)
+        # audio_duration = get_audio_duration_ffprobe(file_path)
+        output_path = os.path.join(output_dir, filename.replace(".mp3", ".txt"))
 
-                while start < audio_duration:
-                    text = transcribe_segment(
-                        model, file_path, start, min(end, audio_duration)
-                    )
-                    output_file.write(text + "\n\n")
-                    # Move the window forward by 30 seconds
-                    start += 30
-                    end += 30
+        with open(output_path, "w") as output_file:
+            result = model.transcribe(file_path, word_timestamps=True)
+            for segment in result["segments"]:
+                text = segment["text"]
+                start = segment["start"]
+                end = segment["end"]
+                output_file.write(f"[{start:.3f},{end:.3f}] {text}\n")
 
-    print("Transcription completed.")
+    print("Transcriptions completed.")
 
 
 def main():
-    rip_audio_files()
+    # rip_audio_files()
+    transcribe_audio_files()
 
 
 if __name__ == "__main__":
