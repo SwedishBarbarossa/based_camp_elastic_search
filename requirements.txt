@@ -1,0 +1,2 @@
+-r video_processing/requirements.txt
+-r web_server/requirements.txt
