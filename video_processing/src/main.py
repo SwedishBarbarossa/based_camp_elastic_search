@@ -1,5 +1,4 @@
 import os
-import subprocess
 
 import whisper
 from pytube import Playlist
@@ -8,19 +7,20 @@ from tqdm import tqdm
 
 
 def rip_audio_files():
-    if not os.path.exists("videos"):
-        os.mkdir("videos")
+    output_dir = "videos"
+    os.makedirs(output_dir, exist_ok=True)
 
     # create age restricted file if it doesn't exist
-    if not os.path.exists("videos/age_restricted.txt"):
-        open("videos/age_restricted.txt", "w")
+    age_restricted_path = f"{output_dir}/age_restricted.txt"
+    if not os.path.exists(age_restricted_path):
+        open(age_restricted_path, "w")
 
     age_restricted = set()
-    with open("videos/age_restricted.txt", "r") as f:
+    with open(age_restricted_path, "r") as f:
         for line in f:
             age_restricted.add(line.strip())
 
-    files_in_dir = os.listdir("videos")
+    files_in_dir = os.listdir(output_dir)
     audio_files = set([file for file in files_in_dir if file.endswith(".mp3")])
 
     p = Playlist(
@@ -40,14 +40,14 @@ def rip_audio_files():
                 raise ValueError("No audio stream found")
 
             audio_obj.download(
-                output_path="videos", filename=f"{video_id}.mp3", skip_existing=True
+                output_path=output_dir, filename=f"{video_id}.mp3", skip_existing=True
             )
         except AgeRestrictedError:
             # add to list to download later
             if video_id in age_restricted:
                 continue
 
-            with open("videos/age_restricted.txt", "a") as f:
+            with open(age_restricted_path, "a") as f:
                 f.write(f"{video_id}\n")
 
 
@@ -60,7 +60,7 @@ def transcribe_audio_files():
     os.makedirs(output_dir, exist_ok=True)
 
     # Load the Whisper model
-    model = whisper.load_model("tiny")  # You can choose another model size as needed
+    model = whisper.load_model("small")  # You can choose another model size as needed
 
     # Process each MP3 file in the directory
     for filename in tqdm(os.listdir(audio_dir)):
@@ -68,13 +68,15 @@ def transcribe_audio_files():
             continue
 
         file_path = os.path.join(audio_dir, filename)
-        # audio_duration = get_audio_duration_ffprobe(file_path)
         output_path = os.path.join(output_dir, filename.replace(".mp3", ".txt"))
 
         with open(output_path, "w") as output_file:
             result = model.transcribe(file_path, word_timestamps=True)
             for segment in result["segments"]:
                 text = segment["text"]
+                if not text.strip():
+                    continue
+
                 start = segment["start"]
                 end = segment["end"]
                 output_file.write(f"[{start:.3f},{end:.3f}] {text}\n")
@@ -83,7 +85,7 @@ def transcribe_audio_files():
 
 
 def main():
-    # rip_audio_files()
+    rip_audio_files()
     transcribe_audio_files()
 
 
