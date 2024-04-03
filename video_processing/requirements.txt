@@ -1,3 +1,5 @@
 pytube
 tqdm
 openai-whisper
+numpy
+sentence-transformers
