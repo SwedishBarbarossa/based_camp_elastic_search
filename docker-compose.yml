@@ -1,0 +1,17 @@
+services:
+  web:
+    build: web_server
+    command: uvicorn main:app --host 0.0.0.0 --port 80
+    volumes:
+      - ./web_server/src:/src
+      - ./embeddings:/src/embeddings
+      - ./web_server/src/static:/src/static
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./web_server/config/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - web

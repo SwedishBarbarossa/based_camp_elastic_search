@@ -2,3 +2,4 @@ fastapi[all]
 annoy
 numpy
 uvicorn
+sentence-transformers

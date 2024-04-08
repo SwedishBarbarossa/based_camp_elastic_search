@@ -1,0 +1,112 @@
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    background: linear-gradient(to right, indigo 0%, black 10%, black 90%, indigo 100%);
+    color: white;
+}
+
+.entry-container, .controls-container, button {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 5px;
+}
+
+button {
+    color: white;
+    border: 1px solid indigo;
+    background-color: transparent;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    margin-bottom: unset;
+    padding: 10px;
+}
+
+button:hover {
+    background-color: indigo;
+}
+
+@keyframes slideUpFadeInOut {
+    0% {
+        bottom: 80%;
+        opacity: 0;
+    }
+    25% {
+        bottom: 100%;
+        opacity: 1;
+    }
+    80% {
+        bottom: 105;
+        opacity: 1;
+    }
+    100% {
+        bottom: 110%;
+        opacity: 0;
+    }
+}
+
+.notification {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px;
+    background-color: black;
+    border: 1px solid white;
+    border-radius: 5px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1;
+    opacity: 0;
+    animation: slideUpFadeInOut 1s forwards;
+}
+
+.results-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    row-gap: 10px;
+}
+
+.search-bar-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    background: radial-gradient(indigo 10%, transparent 60%);
+    padding: 70px;
+}
+
+.search-bar {
+    width: 30%;
+    min-width: 300px;
+    background-color: #ffffffbd;
+    border: 3px solid indigo;
+    border-radius: 3px;
+    padding: 5px;
+}
+
+.entry-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: fit-content;
+}
+
+.entry-container.open {
+    column-gap: 10px;
+}
+
+.controls-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.entry-container.open .controls-container {
+    flex-direction: column;
+    align-items: center;
+    width: fit-content;
+}

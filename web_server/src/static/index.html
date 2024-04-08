@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Based Camp Semantic Search</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script>
+        async function search() {
+            let query = document.getElementById('search-query').value;
+            let response = await fetch(`/search/?query=${query}`);
+            let data = await response.json();
+    
+            let resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = ''; // Clear previous results
+    
+            // Process results to sort by distance
+            let segments = Object.keys(data.results).map(segment => {
+                const [videoId, start, end] = segment.split('|');
+                const distance = data.results[segment];
+                return { videoId, start, end, distance };
+            }).sort((a, b) => a.distance - b.distance);
+    
+            segments.forEach(({ videoId, start, end, distance }) => {
+                const videoLink = `https://www.youtube.com/watch?v=${videoId}&t=${start}s`;
+                const embedLink = `https://www.youtube.com/embed/${videoId}?start=${start}`;
+    
+                // Entry container
+                let entryContainer = document.createElement("div");
+                entryContainer.className = "entry-container";
+    
+                // Container for distance and buttons
+                let controlsContainer = document.createElement("div");
+                controlsContainer.className = "controls-container";
+    
+                // Distance display
+                let distanceDisplay = document.createElement("div");
+                distanceDisplay.textContent = `Distance: ${distance.toFixed(3)}`;
+    
+                // Copy link button
+                let copyBtn = document.createElement("button");
+                copyBtn.textContent = "Copy Link";
+                copyBtn.style.position = "relative"; // Needed to position the notification correctly
+                copyBtn.onclick = function() {
+                    navigator.clipboard.writeText(videoLink).then(() => {
+                        // Create the notification element
+                        let notification = document.createElement("div");
+                        notification.textContent = "Copied!";
+                        notification.className = "notification";
+
+                        // Append and remove the notification after 1 seconds
+                        copyBtn.appendChild(notification);
+                        setTimeout(() => notification.remove(), 1000);
+                    });
+                };
+    
+                // Toggle embed button
+                let toggleEmbedBtn = document.createElement("button");
+                toggleEmbedBtn.textContent = "Show/Hide Video";
+                let iframe;
+                toggleEmbedBtn.onclick = function() {
+                    if (!iframe) {
+                        iframe = document.createElement("iframe");
+                        iframe.setAttribute("width", "560");
+                        iframe.setAttribute("height", "315");
+                        iframe.setAttribute("src", embedLink);
+                        iframe.setAttribute("title", "YouTube video player");
+                        iframe.setAttribute("frameborder", "0");
+                        iframe.setAttribute("allow", "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share");
+                        iframe.setAttribute("allowfullscreen", "true");
+                        iframe.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
+                        entryContainer.appendChild(iframe);
+                        entryContainer.classList.add("open");
+                    } else {
+                        iframe.remove();
+                        iframe = null;
+                        entryContainer.classList.remove("open");
+                    }
+                };
+    
+                // Append distance and buttons to controls container
+                controlsContainer.appendChild(distanceDisplay);
+                controlsContainer.appendChild(copyBtn);
+                controlsContainer.appendChild(toggleEmbedBtn);
+    
+                // Append controls container to entry container
+                entryContainer.appendChild(controlsContainer);
+    
+                // Append entry container to results
+                resultsDiv.appendChild(entryContainer);
+            });
+        }
+    
+        function handleKeyPress(event) {
+            if (event.keyCode === 13 || event.which === 13) {
+                search();
+            }
+        }
+    
+        window.onload = function() {
+            document.getElementById('search-query').addEventListener('keypress', handleKeyPress);
+        };
+    </script>
+    
+</head>
+<body>
+    <div class="search-bar-container">
+        <h1>Based Camp with Malcolm & Simone Collins</h1>
+        <div>
+            <h2>Semantic Search</h2>
+            <input type="text" id="search-query" placeholder="Enter search query" class="search-bar">
+            <button onclick="search()">Search</button>
+        </div>
+    </div>
+    <div id="results" class="results-container">
+        <!-- Results with video embeds and timestamp selectors will be displayed here -->
+    </div>
+</body>
+</html>
