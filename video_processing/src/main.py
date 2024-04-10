@@ -3,6 +3,7 @@ import re
 
 import numpy as np
 import numpy.typing as npt
+import torch
 import whisper
 from pytube import Playlist
 from pytube.exceptions import AgeRestrictedError
@@ -68,7 +69,10 @@ def transcribe_audio_files(audio_dir: str, transcripts_dir: str):
 
     # Load the Whisper model
     # You can choose another model size as needed
-    model = whisper.load_model("medium")
+    has_cuda = torch.cuda.is_available()
+    model = whisper.load_model(
+        "medium", device="cuda" if has_cuda else "cpu", in_memory=has_cuda
+    )
 
     # Process each MP3 file in the directory
     for filename in tqdm(os.listdir(audio_dir)):
@@ -127,6 +131,7 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str):
             windows = [
                 (start, start + 60)
                 for start in range(int(start_time), int(end_time), 30)
+                if start + 30 <= end_time
             ]
 
             # Step 3: For each window, concatenate texts that fall within the window
@@ -138,6 +143,8 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str):
                     if start >= window_start and end <= window_end
                 ]
                 concatenated_text = " ".join(texts)
+                if len(concatenated_text) < 100:
+                    continue
                 concatenated_texts.append((window_start, window_end, concatenated_text))
 
             # save the concatenated texts with the proper name
@@ -146,7 +153,9 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str):
                 segments.append((segment_name, text))
 
     # Load the SentenceTransformer model
-    model = SentenceTransformer("all-MiniLM-L6-v2")
+    model = SentenceTransformer(
+        "all-MiniLM-L6-v2", device="cuda" if torch.cuda.is_available() else "cpu"
+    )
 
     # Encode the segments and save the .npy file
     os.makedirs(embeddings_dir, exist_ok=True)
@@ -159,9 +168,12 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str):
 
 
 def main():
-    audio_dir = "audio"
-    transcripts_dir = "transcriptions"
-    embeddings_dir = "embeddings"
+    root = os.path.dirname(os.path.abspath(__file__)).removesuffix(
+        "video_processing/src"
+    )
+    audio_dir = os.path.join(root, "audio")
+    transcripts_dir = os.path.join(root, "transcriptions")
+    embeddings_dir = os.path.join(root, "embeddings")
 
     rip_audio_files(audio_dir)
     transcribe_audio_files(audio_dir, transcripts_dir)
