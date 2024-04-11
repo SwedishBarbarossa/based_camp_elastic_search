@@ -15,7 +15,7 @@ def rip_audio_files(audio_dir: str):
     os.makedirs(audio_dir, exist_ok=True)
 
     # create age restricted file if it doesn't exist
-    age_restricted_path = f"{audio_dir}/age_restricted.txt"
+    age_restricted_path = os.path.join(audio_dir, "age_restricted.txt")
     if not os.path.exists(age_restricted_path):
         open(age_restricted_path, "w")
 
@@ -29,7 +29,10 @@ def rip_audio_files(audio_dir: str):
     audio_files: set[str] = {
         file
         for file in files_in_dir
-        if (file.endswith(".mp3") and os.path.getsize(f"{audio_dir}/{file}") > 1000000)
+        if (
+            file.endswith(".mp3")
+            and os.path.getsize(os.path.join(audio_dir, file)) > 1000000
+        )
     }
 
     p = Playlist(
@@ -112,7 +115,7 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str):
             continue
 
         # get the time stamps from each file
-        file_path = transcripts_dir + "/" + filename
+        file_path = os.path.join(transcripts_dir, filename)
         with open(file_path, "r") as transcript:
             # Step 1: Parse transcript lines
             parsed_transcripts = [
@@ -142,7 +145,7 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str):
                     for start, end, text in parsed_transcripts
                     if start >= window_start and end <= window_end
                 ]
-                concatenated_text = " ".join(texts)
+                concatenated_text = "\n".join(texts)
                 if len(concatenated_text) < 100:
                     continue
                 concatenated_texts.append((window_start, window_end, concatenated_text))
@@ -160,11 +163,12 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str):
     # Encode the segments and save the .npy file
     os.makedirs(embeddings_dir, exist_ok=True)
     for segment_name, text in tqdm(segments):
-        if os.path.exists(embeddings_dir + "/" + segment_name + ".npy"):
+        seg_path = os.path.join(embeddings_dir, segment_name + ".npy")
+        if os.path.exists(seg_path):
             continue
 
         embeddings = model.encode(text)
-        np.save(embeddings_dir + "/" + segment_name, embeddings)
+        np.save(seg_path)
 
 
 def main():
