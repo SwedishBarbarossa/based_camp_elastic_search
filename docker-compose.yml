@@ -1,17 +1,25 @@
 services:
-  web:
-    build: web_server
-    command: uvicorn main:app --host 0.0.0.0 --port 80
+  web_server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    command: python3 server.py
     volumes:
-      - ./web_server/src:/src
-      - ./embeddings:/src/embeddings
-      - ./web_server/src/static:/src/static
-
+      - ./server_embeddings/:/src/server_embeddings/
+      - ./web_server/src/saved/:/src/web_server/src/saved/
+    env_file:
+      - path: ./env/dev.env
+        required: true # default
+      - path: ./env/prod.env
+        required: false
+      
   nginx:
-    image: nginx:latest
-    ports:
-      - "80:80"
+    image: nginx:stable-alpine
     volumes:
       - ./web_server/config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./web_server/src/static/:/app/static/:ro
     depends_on:
-      - web
+      - web_server
+    ports:
+      - 80:80
+      - 20023:20023

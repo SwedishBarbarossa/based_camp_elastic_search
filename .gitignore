@@ -4,3 +4,4 @@ transcriptions
 embeddings
 __pycache__
 web_server/src/saved
+server_embeddings
