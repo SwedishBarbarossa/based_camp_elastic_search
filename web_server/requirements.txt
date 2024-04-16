@@ -3,3 +3,5 @@ annoy
 numpy
 uvicorn
 sentence-transformers
+grpcio
+grpcio-tools
