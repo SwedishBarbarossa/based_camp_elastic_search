@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package transcript_encoding;
+
+service StringAndArrayService {
+  rpc ProcessData (DataRequest) returns (DataResponse) {}
+}
+
+message DataRequest {
+  string input_string = 1;
+  repeated float array = 2;
+}
+
+message DataResponse {
+  string result = 1;
+}
