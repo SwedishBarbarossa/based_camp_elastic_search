@@ -105,6 +105,25 @@ def transcribe_audio_files(audio_dir: str, transcripts_dir: str):
     print("Transcriptions completed.")
 
 
+def _split_long_segments(
+    start: float, end: float, text: str, max_length: int
+) -> list[tuple[float, float, str]]:
+    if end - start < max_length:
+        return [(start, end, text)]
+
+    # Split the segment into multiple segments
+    midpoint_time = (start + end) / 2
+    split_text = text.split(" ")
+    arr_midpoint = int(np.round(len(split_text) / 2))
+    first_half = _split_long_segments(
+        start, midpoint_time, " ".join(split_text[:arr_midpoint]), max_length
+    )
+    second_half = _split_long_segments(
+        midpoint_time, end, " ".join(split_text[arr_midpoint:]), max_length
+    )
+    return first_half + second_half
+
+
 def encode_transcripts(transcripts_dir: str, embeddings_dir: str):
     # Transcript line pattern
     pattern = re.compile(r"\[(\d+\.\d+),(\d+\.\d+)\]\s+(.*)")
@@ -114,11 +133,11 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str):
         if not filename.endswith(".txt"):
             continue
 
-        # get the time stamps from each file
+        # get the time stamps from file
         file_path = os.path.join(transcripts_dir, filename)
         with open(file_path, "r") as transcript:
             # Step 1: Parse transcript lines
-            parsed_transcripts = [
+            parsed_transcript = [
                 (
                     float(match.group(1)),  # Start time
                     float(match.group(2)),  # End time
@@ -128,13 +147,20 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str):
                 if (match := pattern.match(line))
             ]
 
+            # Step 1.5: Split long segments
+            transcript = []
+            for start, end, text in parsed_transcript:
+                transcript += _split_long_segments(start, end, text, 15)
+
+            transcript.sort(key=lambda x: x[0])
+
             # Step 2: Determine the time windows based on the timestamps in the data
-            start_time = min([start for start, end, text in parsed_transcripts])
-            end_time = max([end for start, end, text in parsed_transcripts])
+            start_time = min([entry[0] for entry in transcript])
+            end_time = max([entry[1] for entry in transcript])
             windows = [
-                (start, start + 60)
-                for start in range(int(start_time), int(end_time), 30)
-                if start + 30 <= end_time
+                (start, start + 30)
+                for start in range(int(start_time), int(end_time), 15)
+                if start + 15 <= end_time
             ]
 
             # Step 3: For each window, concatenate texts that fall within the window
@@ -142,11 +168,11 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str):
             for window_start, window_end in windows:
                 texts = [
                     text
-                    for start, end, text in parsed_transcripts
+                    for start, end, text in transcript
                     if start >= window_start and end <= window_end
                 ]
                 concatenated_text = "\n".join(texts)
-                if len(concatenated_text) < 100:
+                if len(concatenated_text) < 50:
                     continue
                 concatenated_texts.append((window_start, window_end, concatenated_text))
 
@@ -168,7 +194,7 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str):
             continue
 
         embeddings = model.encode(text)
-        np.save(seg_path)
+        np.save(seg_path, embeddings)
 
 
 def main():
@@ -179,8 +205,11 @@ def main():
     transcripts_dir = os.path.join(root, "transcriptions")
     embeddings_dir = os.path.join(root, "embeddings")
 
+    print("Ripping audio files...")
     rip_audio_files(audio_dir)
+    print("Transcribing audio files...")
     transcribe_audio_files(audio_dir, transcripts_dir)
+    print("Encoding transcripts...")
     encode_transcripts(transcripts_dir, embeddings_dir)
 
 

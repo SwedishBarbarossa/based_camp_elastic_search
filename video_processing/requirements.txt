@@ -3,3 +3,6 @@ tqdm
 openai-whisper
 numpy
 sentence-transformers
+grpcio
+grpcio-tools
+python-dotenv
