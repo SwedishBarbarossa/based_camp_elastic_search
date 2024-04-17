@@ -178,7 +178,7 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str):
 
             # save the concatenated texts with the proper name
             for start, end, text in concatenated_texts:
-                segment_name = f"{filename.removesuffix('.txt')}|{start}|{end}"
+                segment_name = f"{filename.removesuffix('.txt')} {start} {end}"
                 segments.append((segment_name, text))
 
     # Load the SentenceTransformer model

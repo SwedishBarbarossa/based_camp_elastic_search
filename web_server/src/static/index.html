@@ -16,7 +16,7 @@
     
             // Process results to sort by distance
             let segments = Object.keys(data.results).map(segment => {
-                const [videoId, start, end] = segment.split('|');
+                const [videoId, start, end] = segment.split(' ');
                 const distance = data.results[segment];
                 return { videoId, start, end, distance };
             }).sort((a, b) => a.distance - b.distance);
