@@ -11,28 +11,26 @@ from sentence_transformers import SentenceTransformer
 from gRPC.server import serve as grpc_server
 from web_server.src.server_funcs import build_index, get_index
 
-root = os.path.dirname(os.path.abspath(__file__))
-work_dir = os.path.join(root, "web_server", "src")
-index_name = os.path.join(work_dir, "saved", "index.ann")
-map_name = os.path.join(work_dir, "saved", "index_value_map")
-embeddings_dir = os.path.join(root, "server_embeddings")
-global index
-index = None
-global index_map
-index_map = {}
+ROOT = os.path.dirname(os.path.abspath(__file__))
+WORK_DIR = os.path.join(ROOT, "web_server", "src")
+INDEX_NAME = os.path.join(WORK_DIR, "saved", "index.ann")
+MAP_NAME = os.path.join(WORK_DIR, "saved", "index_value_map")
+EMBEDDINGS_DIR = os.path.join(ROOT, "server_embeddings")
+STATIC_PATH = os.path.join(WORK_DIR, "static")
+INDEX_PATH = os.path.join(STATIC_PATH, "index.html")
+STYLE_PATH = os.path.join(STATIC_PATH, "style.css")
+DIM = 384
+REBUILD_COOLDOWN = timedelta(minutes=1)
+REBUILD_SLEEP = 600
 
-dim = 384
-rebuild_wait = timedelta(minutes=1)  # 5)
-rebuild_sleep = 10  # 600
-
-
-static = os.path.join(work_dir, "static")
-index_path = os.path.join(static, "index.html")
-style_path = os.path.join(static, "style.css")
 fapi_app = FastAPI()
 last_grpc_call_time: datetime | None = datetime.now()
 lock = threading.Lock()
 
+global index
+index = None
+global index_map
+index_map = {}
 
 # Load the SentenceTransformer model
 model = SentenceTransformer("all-MiniLM-L6-v2")
@@ -44,7 +42,7 @@ def rebuild_annoy_index():
     while True:
         with lock:
             if last_grpc_call_time is not None:
-                wait_time = (last_grpc_call_time + rebuild_wait) - datetime.now()
+                wait_time = (last_grpc_call_time + REBUILD_COOLDOWN) - datetime.now()
                 wait_seconds = max(0, wait_time.total_seconds())
             else:
                 wait_seconds = np.inf
@@ -52,7 +50,7 @@ def rebuild_annoy_index():
         if wait_seconds == 0:
             # Rebuild the Annoy index here
             print("Rebuilding Annoy index...")
-            index, index_map = build_index(dim, index_name, map_name, embeddings_dir)
+            index, index_map = build_index(DIM, INDEX_NAME, MAP_NAME, EMBEDDINGS_DIR)
 
             print("Annoy index rebuilt.")
 
@@ -60,7 +58,7 @@ def rebuild_annoy_index():
             with lock:
                 last_grpc_call_time = None
 
-        time.sleep(rebuild_sleep)
+        time.sleep(REBUILD_SLEEP)
 
 
 @fapi_app.get("/search/")
@@ -71,11 +69,10 @@ async def search(query: str | None = None):
     if len(query) > 100:
         query = query[:100]
 
-    # index, index_map = get_index(dim, index_name, map_name, embeddings_dir)
     global index, index_map
     if index is None:
         print("get index")
-        index, index_map = get_index(dim, index_name, map_name, embeddings_dir)
+        index, index_map = get_index(DIM, INDEX_NAME, MAP_NAME, EMBEDDINGS_DIR)
 
     search_vector = model.encode(query)
     indices, distances = index.get_nns_by_vector(
@@ -103,7 +100,7 @@ rebuild_thread.start()
 grpc_thread = threading.Thread(
     target=grpc_server,
     daemon=True,
-    kwargs={"embeddings_dir": embeddings_dir, "callback": last_grpc_call_time_callback},
+    kwargs={"embeddings_dir": EMBEDDINGS_DIR, "callback": last_grpc_call_time_callback},
 )
 grpc_thread.start()
 
