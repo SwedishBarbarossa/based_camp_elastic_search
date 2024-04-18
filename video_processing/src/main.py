@@ -198,9 +198,7 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str):
 
 
 def main():
-    root = os.path.dirname(os.path.abspath(__file__)).removesuffix(
-        "video_processing/src"
-    )
+    root = os.path.dirname(os.path.abspath(__file__)).split("video_processing")[0]
     audio_dir = os.path.join(root, "audio")
     transcripts_dir = os.path.join(root, "transcriptions")
     embeddings_dir = os.path.join(root, "embeddings")
