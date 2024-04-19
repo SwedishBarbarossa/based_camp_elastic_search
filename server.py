@@ -12,19 +12,23 @@ from gRPC.server import serve as grpc_server
 from web_server.src.server_funcs import build_index, get_index
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
+EMBEDDINGS_DIR = os.path.join(ROOT, "server_embeddings")
+
 WORK_DIR = os.path.join(ROOT, "web_server", "src")
 INDEX_NAME = os.path.join(WORK_DIR, "saved", "index.ann")
 MAP_NAME = os.path.join(WORK_DIR, "saved", "index_value_map")
-EMBEDDINGS_DIR = os.path.join(ROOT, "server_embeddings")
+
 STATIC_PATH = os.path.join(WORK_DIR, "static")
 INDEX_PATH = os.path.join(STATIC_PATH, "index.html")
 STYLE_PATH = os.path.join(STATIC_PATH, "style.css")
+
 DIM = 384
 REBUILD_COOLDOWN = timedelta(minutes=1)
 REBUILD_SLEEP = 600
 
 fapi_app = FastAPI()
 last_grpc_call_time: datetime | None = datetime.now()
+last_index_rebuild: datetime | None = None
 lock = threading.Lock()
 
 global index
@@ -37,7 +41,7 @@ model = SentenceTransformer("all-MiniLM-L6-v2")
 
 
 def rebuild_annoy_index():
-    global last_grpc_call_time, index, index_map
+    global last_grpc_call_time, index, index_map, last_index_rebuild
     wait_seconds = np.inf
     while True:
         with lock:
@@ -45,20 +49,20 @@ def rebuild_annoy_index():
                 wait_time = (last_grpc_call_time + REBUILD_COOLDOWN) - datetime.now()
                 wait_seconds = max(0, wait_time.total_seconds())
             else:
-                wait_seconds = np.inf
+                wait_seconds = REBUILD_SLEEP
 
         if wait_seconds == 0:
             # Rebuild the Annoy index here
             print("Rebuilding Annoy index...")
             index, index_map = build_index(DIM, INDEX_NAME, MAP_NAME, EMBEDDINGS_DIR)
-
+            last_index_rebuild = datetime.now()
             print("Annoy index rebuilt.")
 
             # Reset the timer
             with lock:
                 last_grpc_call_time = None
 
-        time.sleep(REBUILD_SLEEP)
+        time.sleep(wait_seconds)
 
 
 @fapi_app.get("/search/")
@@ -96,7 +100,7 @@ def last_grpc_call_time_callback(*args, **kwargs):
 rebuild_thread = threading.Thread(target=rebuild_annoy_index, daemon=True)
 rebuild_thread.start()
 
-# Start the gRPC server
+# Start the gRPC server thread
 grpc_thread = threading.Thread(
     target=grpc_server,
     daemon=True,
