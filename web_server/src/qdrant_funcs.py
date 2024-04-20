@@ -5,7 +5,6 @@ from typing import Literal, TypedDict
 import numpy as np
 import numpy.typing as npt
 from qdrant_client import QdrantClient, models
-from tqdm import tqdm
 
 
 class ModelDims(TypedDict):
@@ -85,7 +84,7 @@ def add_to_qdrant(
     already_added: set[str] = set()
     if os.path.exists(record_path):
         with open(record_path, "r") as f:
-            already_added = set(f.readlines())
+            already_added = {x.strip() for x in f.readlines()}
     else:
         # create the file
         with open(record_path, "w") as f:
