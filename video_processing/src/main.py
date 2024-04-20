@@ -124,7 +124,7 @@ def _split_long_segments(
     return first_half + second_half
 
 
-def encode_transcripts(transcripts_dir: str, embeddings_dir: str):
+def encode_transcripts(transcripts_dir: str, embeddings_dir: str, channel: str):
     # Transcript line pattern
     pattern = re.compile(r"\[(\d+\.\d+),(\d+\.\d+)\]\s+(.*)")
 
@@ -182,19 +182,31 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str):
                 segments.append((segment_name, text))
 
     # Load the SentenceTransformer model
-    model = SentenceTransformer(
+    SYMMETRIC_MODEL = SentenceTransformer(
         "all-MiniLM-L6-v2", device="cuda" if torch.cuda.is_available() else "cpu"
+    )
+    ASYMMETRIC_MODEL = SentenceTransformer(
+        "msmarco-MiniLM-L-6-v3", device="cuda" if torch.cuda.is_available() else "cpu"
     )
 
     # Encode the segments and save the .npy file
     os.makedirs(embeddings_dir, exist_ok=True)
     for segment_name, text in tqdm(segments):
-        seg_path = os.path.join(embeddings_dir, segment_name + ".npy")
-        if os.path.exists(seg_path):
-            continue
+        # Symmetric encoding
+        sym_seg_path = os.path.join(
+            embeddings_dir, "sym " + f"{channel} " + segment_name + ".npy"
+        )
+        if not os.path.exists(sym_seg_path):
+            embeddings = SYMMETRIC_MODEL.encode(text)
+            np.save(sym_seg_path, embeddings)
 
-        embeddings = model.encode(text)
-        np.save(seg_path, embeddings)
+        # Asymmetric encoding
+        asym_seg_path = os.path.join(
+            embeddings_dir, "asym " + f"{channel} " + segment_name + ".npy"
+        )
+        if not os.path.exists(asym_seg_path):
+            embeddings = ASYMMETRIC_MODEL.encode(text)
+            np.save(asym_seg_path, embeddings)
 
 
 def main():
@@ -208,7 +220,7 @@ def main():
     print("Transcribing audio files...")
     transcribe_audio_files(audio_dir, transcripts_dir)
     print("Encoding transcripts...")
-    encode_transcripts(transcripts_dir, embeddings_dir)
+    encode_transcripts(transcripts_dir, embeddings_dir, "based_camp")
 
 
 if __name__ == "__main__":

@@ -23,6 +23,6 @@ if __name__ == "__main__":
 
         for embedding in os.listdir("embeddings"):
             arr = np.load(f"embeddings/{embedding}")
-            send_embedding(embedding, arr)
+            send_embedding(embedding.removesuffix(".npy"), arr)
 
         time.sleep(60 * 60)

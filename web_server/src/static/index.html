@@ -6,22 +6,28 @@
     <title>Based Camp Semantic Search</title>
     <link rel="stylesheet" href="/static/style.css">
     <script>
-        async function search() {
-            let query = document.getElementById('search-query').value;
-            let response = await fetch(`/search/?query=${query}`);
+        async function search(q_type) {
+            let query = "";
+            if (q_type == 'sym') {
+                query = document.getElementById('search-query-sym').value;
+            } else if (q_type == 'asym') {
+                query = document.getElementById('search-query-asym').value;
+            }
+
+            let response = await fetch(`/search/?query=${query}&collections=based_camp&q_type=${q_type}`);
             let data = await response.json();
     
             let resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = ''; // Clear previous results
     
-            // Process results to sort by distance
-            let segments = Object.keys(data.results).map(segment => {
-                const [videoId, start, end] = segment.split(' ');
-                const distance = data.results[segment];
-                return { videoId, start, end, distance };
-            }).sort((a, b) => a.distance - b.distance);
-    
-            segments.forEach(({ videoId, start, end, distance }) => {
+            // Process results to sort by score
+            let segments = Object.keys(data.results).map(idx => {
+                const segment = data.results[idx];
+                const [videoId, start, end, score] = segment;
+                return { videoId, start, end, score };
+            }).sort((a, b) => b.score - a.score);
+
+            segments.forEach(({ videoId, start, end, score }) => {
                 const videoLink = `https://www.youtube.com/watch?v=${videoId}&t=${start}s`;
                 const embedLink = `https://www.youtube.com/embed/${videoId}?start=${start}`;
     
@@ -29,13 +35,13 @@
                 let entryContainer = document.createElement("div");
                 entryContainer.className = "entry-container";
     
-                // Container for distance and buttons
+                // Container for score and buttons
                 let controlsContainer = document.createElement("div");
                 controlsContainer.className = "controls-container";
     
-                // Distance display
-                let distanceDisplay = document.createElement("div");
-                distanceDisplay.textContent = `Distance: ${distance.toFixed(3)}`;
+                // Score display
+                let scoreDisplay = document.createElement("div");
+                scoreDisplay.textContent = `Score: ${score.toFixed(3)}`;
     
                 // Copy link button
                 let copyBtn = document.createElement("button");
@@ -78,8 +84,8 @@
                     }
                 };
     
-                // Append distance and buttons to controls container
-                controlsContainer.appendChild(distanceDisplay);
+                // Append score and buttons to controls container
+                controlsContainer.appendChild(scoreDisplay);
                 controlsContainer.appendChild(copyBtn);
                 controlsContainer.appendChild(toggleEmbedBtn);
     
@@ -91,14 +97,21 @@
             });
         }
     
-        function handleKeyPress(event) {
+        function handleKeyPressSym(event) {
             if (event.keyCode === 13 || event.which === 13) {
-                search();
+                search('sym');
+            }
+        }
+
+        function handleKeyPressAsym(event) {
+            if (event.keyCode === 13 || event.which === 13) {
+                search('asym');
             }
         }
     
         window.onload = function() {
-            document.getElementById('search-query').addEventListener('keypress', handleKeyPress);
+            document.getElementById('search-query-sym').addEventListener('keypress', handleKeyPressSym);
+            document.getElementById('search-query-asym').addEventListener('keypress', handleKeyPressAsym);
         };
     </script>
     
@@ -107,9 +120,14 @@
     <div class="search-bar-container">
         <h1>Based Camp with Malcolm & Simone Collins</h1>
         <div>
-            <h2>Semantic Search</h2>
-            <input type="text" id="search-query" placeholder="Enter search query" class="search-bar">
-            <button onclick="search()">Search</button>
+            <h2>Search Similar Phrase</h2>
+            <input type="text" id="search-query-sym" placeholder="Enter phrase" class="search-bar">
+            <button onclick="search('sym')">Search</button>
+        </div>
+        <div>
+            <h2>Search Answer to Question</h2>
+            <input type="text" id="search-query-asym" placeholder="Enter question" class="search-bar">
+            <button onclick="search('asym')">Search</button>
         </div>
     </div>
     <div id="results" class="results-container">
