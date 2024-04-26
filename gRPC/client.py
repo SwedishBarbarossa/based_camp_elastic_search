@@ -26,7 +26,7 @@ class AuthInterceptor(grpc.UnaryUnaryClientInterceptor):
         return continuation(client_call_details, request)
 
 
-def send_embedding(filename: str, array: npt.NDArray[np.float32]):
+def send_embedding(filename: str, array: npt.NDArray[np.float32]) -> str:
     channel = grpc.insecure_channel(f"{HOST_ADDRESS}:20023")
     intercept_channel = grpc.intercept_channel(
         channel, AuthInterceptor(_AUTH_HEADER_VALUE)
@@ -35,4 +35,4 @@ def send_embedding(filename: str, array: npt.NDArray[np.float32]):
     response = stub.ProcessData(
         service_pb2.DataRequest(input_string=filename, array=array)
     )
-    print("Client received: " + response.result)
+    return "Client received: " + response.result

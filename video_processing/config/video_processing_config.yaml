@@ -1,0 +1,46 @@
+# Video processing config
+# source types:
+#   youtube_playlists
+#   youtube_channels
+#   youtube_videos
+#
+# Format channels as "/c/{channel_name}", "/u/{channel_name}" or /channel/{channel_id} without "@"
+
+creators:
+  based_camp:
+    youtube_playlists:
+      - link: "https://www.youtube.com/watch?v=S9naHQAmrG4&list=PLg8R-fWRBuHEAFE0yEdkcjCij5PwvfHqH&pp=iAQB"
+  balaji_srinivasan:
+    youtube_playlists:
+      - link: "https://www.youtube.com/playlist?list=PLJg2RipiXz8qGn9xDs_sOYOayQmx1TckE"
+      - link: "https://www.youtube.com/playlist?list=PLUFeA6y-5sFnDkJjRD07BnHoRs1VjscfU"
+    youtube_videos:
+      - link: "https://youtu.be/VeH7qKZr0WI?si=vHecytQu6QCiVTzq"
+      - link: "https://youtu.be/0QC1FK2_pqg?si=5pG8dxpCw1qy3rqZ"
+      - link: "https://youtu.be/XW9mMcE7I7A?si=KSSQ27DlL8uagGzL"
+      - link: "https://youtu.be/eim8REOYLzA?si=7TnRAXZQMUCjwMr0"
+      - link: "https://youtu.be/CDlXPSKPtUo?si=bJCo9a2aVhAryUId"
+      - link: "https://youtu.be/l4fLax7S2Q0?si=nKXC89sodjcy32Ks"
+      - link: "https://youtu.be/qRao8xS_nyM?si=fzEQURrDObhiI6Ih"
+      - link: "https://youtu.be/V8w5Yso0SYE?si=8aiza51iKLuzop4E"
+      - link: "https://youtu.be/G9ULrFN_lCI?si=EulWijyqB28wHI8A"
+      - link: "https://youtu.be/3jPYk7ucrjo?si=Sm7Qaf063Z2tKPel"
+      - link: "https://youtu.be/FV5SqIm5e90?si=HULBjyjNIyDXFAjg"
+      - link: "https://youtu.be/q-852BsgNck?si=N7JuMq4TAqwWXAjP"
+      - link: "https://youtu.be/dXHbToq1SDU?si=x7ur4UPvC_vQem7j"
+      - link: "https://youtu.be/QKjfAhnWJqU?si=BvIlRa2cH3Dz_vZk"
+      - link: "https://youtu.be/E35poTWzWZA?si=gNhhoVWJHumzy0du"
+      - link: "https://youtu.be/lfd6M9y9_TI?si=SuE4ti-3bSOzUsqT"
+      - link: "https://youtu.be/iir5J6Z3Z1Q?si=a0N0mBkTAaydazL1"
+      - link: "https://youtu.be/tQpZSVCTZCo?si=VMNTnvDSjVgpMXNZ"
+      - link: "https://youtu.be/75GMZWFnyeI?si=N0wR7YODsPHf2cQ4"
+  hormozis:
+    youtube_channels:
+      - link: "https://www.youtube.com/channel/UCUyDOdBWhC1MCxEjC46d-zw"
+      - link: "https://www.youtube.com/channel/UCxCcu9pet4dljrBLf8R5nwA"
+      - link: "https://www.youtube.com/channel/UCZuY75gOI808Rqyr6LgxVww"
+  y_combinator:
+    youtube_channels:
+      - link: "https://www.youtube.com/c/ycombinator"
+
+address: "http://127.0.0.1"
