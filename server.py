@@ -33,6 +33,13 @@ ASYM_DIM = 384
 REBUILD_COOLDOWN = timedelta(seconds=10)
 REBUILD_SLEEP = 60 * 10
 
+EXISTING_CHANNELS = [
+    "based_camp",
+    "balaji_srinivasan",
+    "hormozis",
+    "y_combinator",
+]
+
 fapi_app = FastAPI()
 last_grpc_call_time: datetime | None = datetime.now()
 last_index_rebuild: datetime | None = None
@@ -80,14 +87,15 @@ def update_qdrant():
 @fapi_app.get("/search/")
 async def search(
     query: str | None = None,
-    channels: list[str] | None = None,
+    channels: str | None = None,
     q_type: Literal["sym", "asym"] = "sym",
 ):
+    parsed_channels = ["based_camp"]
     if not query:
         query = "Hello! Today we are talking about"
 
-    if not channels:
-        channels = ["based_camp"]
+    if channels:
+        parsed_channels = [x for x in channels.split(",") if x in EXISTING_CHANNELS]
 
     if q_type not in ["sym", "asym"]:
         q_type = "sym"
@@ -101,9 +109,14 @@ async def search(
         else ASYMMETCIC_MODEL.encode(query)
     )  # type: ignore
 
-    results = query_qdrant(channels, search_vector, qdant_client, q_type)
+    results = query_qdrant(parsed_channels, search_vector, qdant_client, q_type)
 
-    return {"channels": channels, "query": query, "q_type": q_type, "results": results}
+    return {
+        "channels": parsed_channels,
+        "query": query,
+        "q_type": q_type,
+        "results": results,
+    }
 
 
 @fapi_app.get("/latest_rebuild")
