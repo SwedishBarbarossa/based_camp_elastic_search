@@ -4,12 +4,12 @@ import subprocess
 from typing import TypedDict
 
 import numpy as np
+import pytube
+import pytube.exceptions
 import requests
 import torch
 import whisper
 import yaml
-from pytube import Channel, Playlist, YouTube
-from pytube.exceptions import AgeRestrictedError
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 
@@ -78,31 +78,31 @@ def rip_audio_files(
 
     skip_files = audio_files.union(transcript_files)
 
-    vids: list[YouTube] = []
+    vids: list[pytube.YouTube] = []
 
     playlists = config.get("youtube_playlists")
     if playlists:
         for playlist in playlists:
             link = playlist["link"]
-            playlist = Playlist(link)
+            playlist = pytube.Playlist(link)
             vids.extend(list(playlist.videos))
 
     channels = config.get("youtube_channels")
     if channels:
         for channel in channels:
             link = channel["link"]
-            channel = Channel(link)
+            channel = pytube.Channel(link)
             vids.extend(list(channel.videos))
 
     videos = config.get("youtube_videos")
     if videos:
         for video in videos:
             link = video["link"]
-            video = YouTube(link)
+            video = pytube.YouTube(link)
             vids.append(video)
 
     # remove duplicate videos
-    vids_dict: dict[str, YouTube] = {
+    vids_dict: dict[str, pytube.YouTube] = {
         video.video_id: video for video in vids if video.video_id not in skip_files
     }
     vids = list(vids_dict.values())
@@ -121,7 +121,10 @@ def rip_audio_files(
             audio_obj.download(
                 output_path=audio_dir, filename=f"{video_id}.mp3", skip_existing=True
             )
-        except AgeRestrictedError:
+        except requests.exceptions.HTTPError:
+            # Just try again next cycle
+            continue
+        except pytube.exceptions.AgeRestrictedError:
             # add to list to download later
             if video_id in age_restricted:
                 continue
