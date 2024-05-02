@@ -42,5 +42,16 @@ creators:
   y_combinator:
     youtube_channels:
       - link: "https://www.youtube.com/c/ycombinator"
+  charter_cities_institute:
+    youtube_channels:
+      - link: "https://www.youtube.com/channel/UCesutT0yy4f0FDXwLr5TXhA"
+    youtube_playlists:
+      - link: "https://www.youtube.com/playlist?list=PL_AjRcms7EGNnPqgp4mcixI4QrnZV8vVp"
+  startup_societies_foundation:
+    youtube_channels:
+      - link: "https://www.youtube.com/channel/UC2_6_VxyW1ifu4RDjALPYPA"
+  free_cities_foundation:
+    youtube_channels:
+      - link: "https://www.youtube.com/channel/UCfRmCtbHzvcOq6V8i9pKBVQ"
 
 address: "http://127.0.0.1"
