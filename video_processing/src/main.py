@@ -121,9 +121,6 @@ def rip_audio_files(
             audio_obj.download(
                 output_path=audio_dir, filename=f"{video_id}.mp3", skip_existing=True
             )
-        except requests.exceptions.HTTPError:
-            # Just try again next cycle
-            continue
         except pytube.exceptions.AgeRestrictedError:
             # add to list to download later
             if video_id in age_restricted:
@@ -131,6 +128,9 @@ def rip_audio_files(
 
             with open(age_restricted_path, "a") as f:
                 f.write(f"{video_id}\n")
+        except Exception as e:
+            print(f"Error downloading {video_id}: {e}")
+            continue
 
 
 def _get_media_duration(file_path):
