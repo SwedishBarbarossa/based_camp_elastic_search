@@ -17,9 +17,8 @@ else:
 from gRPC.client import send_embedding
 from video_processing.src.main import main as processing
 
-RIP_AUDIO_FILES = True
-
 if __name__ == "__main__":
+    RIP_AUDIO_FILES = True if int(os.environ["RIP_AUDIO_FILES"]) else False
     while True:
         print(f"Starting at {time.ctime()}\n--------------------------------------\n")
         previously_uploaded_files = processing(rip=RIP_AUDIO_FILES)

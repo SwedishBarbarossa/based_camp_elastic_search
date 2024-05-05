@@ -4,7 +4,7 @@
 
 2. Ensure Docker is installed (https://docs.docker.com/engine/install/).
 
-3. If you don't wish to rip and transcribe new videos, which can be very slow, set `RIP_AUDIO_FILES=False` in `processor.py` in the root folder. When set to `True` It does three things: downloads and converts the entire video catalogue into audio, then uses an AI model (OpenAIs Whisper) to create transcripts for each video, and finally uses another AI model (all-MiniLM-L6-v2 and msmarco-MiniLM-L-6-v3) to assign concepts to 30 second windows in the transcripts.
+3. If you wish to rip and transcribe new videos, which can be very slow, set `RIP_AUDIO_FILES=1` in `_root_/env/dev.env`. When set to `1` It does three things: downloads and converts the entire video catalogue into audio, then uses an AI model (OpenAIs Whisper) to create transcripts for each video, and finally uses another AI model (all-MiniLM-L6-v2 and msmarco-MiniLM-L-6-v3) to assign concepts to 30 second windows in the transcripts.
 
 4. Run the 'run_locally.sh' file. The easiest way to run a shell script like this on Windows is to have Git Bash installed. It usually comes with Git. You can install Git and Git Bash here: https://git-scm.com/downloads
 
