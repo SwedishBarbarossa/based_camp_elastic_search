@@ -1,20 +1,21 @@
-Bring up docker-compose to serve site.
-Run processor.py to create the embeddings and send them to server with gRPC.
+### Setup
 
-To run locally swap this line in "docker-compose.yml":
-```
-- ./server_embeddings/:/src/server_embeddings/
-# swap above line into the below line
-- ./embeddings/:/src/server_embeddings/
-```
-and run "run_locally.sh".
+1. Extract the transcriptions_archive.tar.gz file into root folder. It should be `root/transcripts/...` not `root/transcripts/transcripts/...`.
 
-For windows, add ffmpeg.exe to the project folder root.
+2. Ensure Docker is installed (https://docs.docker.com/engine/install/).
 
-Safest download is probably here: https://github.com/BtbN/FFmpeg-Builds/releases
+3. If you don't wish to rip and transcribe new videos, which can be very slow, set `RIP_AUDIO_FILES=False` in 'processor.py' in the root folder. When set to `True` It does three things: downloads and converts the entire video catalogue into audio, then uses AI (OpenAIs Whisper) to create transcripts for each video, and finally uses even more AI (all-MiniLM-L6-v2 and msmarco-MiniLM-L-6-v3) to assign concepts to 30 second windows in the transcripts.
 
-Unverified download here https://www.videohelp.com/software/ffmpeg
+4. Run the 'run_locally.sh' file. The easiest way to run a shell script like this on Windows is to have Git Bash installed. It usually comes with Git. You can install Git and Git Bash here: https://git-scm.com/downloads
 
+5. Once this process is over, there should be thousands of `.npy` files in the 'embeddings' folder in the _root_ folder (not in src). They will bn copied over to `server_embeddings`, read into Qdrant (the database) and subsequently be deleted from `server_embeddings`. This is because the processes are meant to be split between two machines, even though it works on a single machine.
 
-To rip videos from youtube channels, implement this pytube fix:
-https://github.com/pytube/pytube/pull/1409/commits/42a7d8322dd7749a9e950baf6860d115bbeaedfc
+6. The URL of the app is at `http://localhost`. Look at your terminal and wait until the server responds with `Updating Qdrant...` and finally `Qdrant updated.` This can take a few minutes.
+
+7. Afterwards, you should be able to use the search bar and get results back. Don't hesitate to use natural language and multiple keywords in the search bar. Results are sorted according to proximity to the query. Higher scores indicate more proximity and appear at the top.
+
+### Starting Setup For Windows
+
+1. Download the ffmpeg zip file from https://github.com/BtbN/FFmpeg-Builds/releases (or from unverified location here: https://www.videohelp.com/software/ffmpeg) and extract 'ffmpeg.exe' into the root folder of this repository.
+
+2. Finish the ordinary setup
