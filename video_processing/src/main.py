@@ -212,19 +212,21 @@ def transcribe_audio_files(audio_dir: str, transcripts_dir: str):
                 if len(f.readlines()) > 10:
                     skip = True
 
-        if not skip:
-            with open(output_path, "w") as output_file:
-                result = model.transcribe(
-                    file_path, word_timestamps=True, language="en"
-                )
-                for segment in result["segments"]:
-                    text = segment["text"]  # type: ignore
-                    if not text.strip():
-                        continue
+        if skip:
+            # delete the audio file
+            os.remove(file_path)
+            continue
 
-                    start = segment["start"]  # type: ignore
-                    end = segment["end"]  # type: ignore
-                    output_file.write(f"[{start:.3f},{end:.3f}] {text}\n")
+        result = model.transcribe(file_path, word_timestamps=True, language="en")
+        with open(output_path, "w") as output_file:
+            for segment in result["segments"]:
+                text = segment["text"]  # type: ignore
+                if not text.strip():
+                    continue
+
+                start = segment["start"]  # type: ignore
+                end = segment["end"]  # type: ignore
+                output_file.write(f"[{start:.3f},{end:.3f}] {text}\n")
 
         # delete the audio file
         os.remove(file_path)
