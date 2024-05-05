@@ -355,7 +355,7 @@ def get_uploaded_files(config_path: str) -> list[str]:
     return file.text.split("\n")
 
 
-def main() -> list[str]:
+def main(rip=False) -> list[str]:
     root = os.path.dirname(os.path.abspath(__file__)).split("video_processing")[0]
     audio_dir = os.path.join(root, "audio")
     transcripts_dir = os.path.join(root, "transcriptions")
@@ -372,15 +372,16 @@ def main() -> list[str]:
             print("----------------------------------------------------------\n")
         creator_audio_dir = os.path.join(audio_dir, creator)
         creator_transcripts_dir = os.path.join(transcripts_dir, creator)
-        print(f"Ripping {creator} audio files...")
-        rip_audio_files(
-            creator_audio_dir,
-            creator_transcripts_dir,
-            age_restricted_path,
-            creator_conf,
-        )
-        print(f"Transcribing {creator} audio files...")
-        transcribe_audio_files(creator_audio_dir, creator_transcripts_dir)
+        if rip:
+            print(f"Ripping {creator} audio files...")
+            rip_audio_files(
+                creator_audio_dir,
+                creator_transcripts_dir,
+                age_restricted_path,
+                creator_conf,
+            )
+            print(f"Transcribing {creator} audio files...")
+            transcribe_audio_files(creator_audio_dir, creator_transcripts_dir)
         print(f"Encoding {creator} transcripts...")
         encode_transcripts(creator_transcripts_dir, embeddings_dir, creator)
 
