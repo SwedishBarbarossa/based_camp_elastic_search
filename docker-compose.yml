@@ -7,17 +7,26 @@ services:
     volumes:
       - ./server_embeddings/:/src/server_embeddings/
       - ./web_server/src/saved/:/src/web_server/src/saved/
+      - ./web_server/src/static/:/src/web_server/src/static/
     env_file:
       - path: ./env/dev.env
         required: true # default
       - path: ./env/prod.env
         required: false
+    depends_on:
+      - qdrant
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    volumes:
+      - ./qdrant_storage/:/qdrant/storage/
       
   nginx:
     image: nginx:stable-alpine
     volumes:
       - ./web_server/config/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./web_server/src/static/:/app/static/:ro
+      - ./nginx_cache/:/app/cache/:rw
     depends_on:
       - web_server
     ports:

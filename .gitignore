@@ -5,3 +5,6 @@ embeddings
 __pycache__
 web_server/src/saved
 server_embeddings
+qdrant_storage
+web_server/src/static/added.txt
+nginx_cache

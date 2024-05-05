@@ -1,47 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Based Camp Semantic Search</title>
     <link rel="stylesheet" href="/static/style.css">
     <script>
-        async function search() {
-            let query = document.getElementById('search-query').value;
-            let response = await fetch(`/search/?query=${query}`);
+        async function search(q_type) {
+            // Get query from the called search bar
+            let query = "";
+            if (q_type == 'sym') {
+                query = document.getElementById('search-query-sym').value;
+            } else if (q_type == 'asym') {
+                query = document.getElementById('search-query-asym').value;
+            }
+
+            // Get channels selected from radios
+            const channels = [
+                "based_camp",
+                "balaji_srinivasan",
+                "hormozis",
+                "y_combinator",
+                "charter_cities_institute",
+                "startup_societies_foundation",
+                "free_cities_foundation",
+            ];
+            let selected_channels = [];
+            for (i = 0; i < channels.length; i++) {
+                if (document.getElementById(channels[i]).checked) {
+                    selected_channels.push(channels[i]);
+                }
+            }
+            if (selected_channels.length == 0) {
+                selected_channels = channels;
+            }
+            const channels_string = selected_channels.join(",");
+
+            let response = await fetch(`/search/?query=${query}&channels=${channels_string}&q_type=${q_type}`);
             let data = await response.json();
-    
+
             let resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = ''; // Clear previous results
-    
-            // Process results to sort by distance
-            let segments = Object.keys(data.results).map(segment => {
-                const [videoId, start, end] = segment.split(' ');
-                const distance = data.results[segment];
-                return { videoId, start, end, distance };
-            }).sort((a, b) => a.distance - b.distance);
-    
-            segments.forEach(({ videoId, start, end, distance }) => {
+
+            // Process results to sort by score
+            let segments = Object.keys(data.results).map(idx => {
+                const segment = data.results[idx];
+                const [videoId, start, end, score] = segment;
+                return { videoId, start, end, score };
+            }).sort((a, b) => b.score - a.score);
+
+            segments.forEach(({ videoId, start, end, score }) => {
                 const videoLink = `https://www.youtube.com/watch?v=${videoId}&t=${start}s`;
                 const embedLink = `https://www.youtube.com/embed/${videoId}?start=${start}`;
-    
+
                 // Entry container
                 let entryContainer = document.createElement("div");
                 entryContainer.className = "entry-container";
-    
-                // Container for distance and buttons
+
+                // Container for score and buttons
                 let controlsContainer = document.createElement("div");
                 controlsContainer.className = "controls-container";
-    
-                // Distance display
-                let distanceDisplay = document.createElement("div");
-                distanceDisplay.textContent = `Distance: ${distance.toFixed(3)}`;
-    
+
+                // Score display
+                let scoreDisplay = document.createElement("div");
+                scoreDisplay.textContent = `Score: ${score.toFixed(3)}`;
+
                 // Copy link button
                 let copyBtn = document.createElement("button");
                 copyBtn.textContent = "Copy Link";
                 copyBtn.style.position = "relative"; // Needed to position the notification correctly
-                copyBtn.onclick = function() {
+                copyBtn.onclick = function () {
                     navigator.clipboard.writeText(videoLink).then(() => {
                         // Create the notification element
                         let notification = document.createElement("div");
@@ -53,12 +82,12 @@
                         setTimeout(() => notification.remove(), 1000);
                     });
                 };
-    
+
                 // Toggle embed button
                 let toggleEmbedBtn = document.createElement("button");
                 toggleEmbedBtn.textContent = "Show/Hide Video";
                 let iframe;
-                toggleEmbedBtn.onclick = function() {
+                toggleEmbedBtn.onclick = function () {
                     if (!iframe) {
                         iframe = document.createElement("iframe");
                         iframe.setAttribute("width", "560");
@@ -77,39 +106,158 @@
                         entryContainer.classList.remove("open");
                     }
                 };
-    
-                // Append distance and buttons to controls container
-                controlsContainer.appendChild(distanceDisplay);
+
+                // Append score and buttons to controls container
+                controlsContainer.appendChild(scoreDisplay);
                 controlsContainer.appendChild(copyBtn);
                 controlsContainer.appendChild(toggleEmbedBtn);
-    
+
                 // Append controls container to entry container
                 entryContainer.appendChild(controlsContainer);
-    
+
                 // Append entry container to results
                 resultsDiv.appendChild(entryContainer);
             });
         }
-    
-        function handleKeyPress(event) {
+
+        function handleKeyPressSym(event) {
             if (event.keyCode === 13 || event.which === 13) {
-                search();
+                search('sym');
             }
         }
-    
-        window.onload = function() {
-            document.getElementById('search-query').addEventListener('keypress', handleKeyPress);
+
+        function handleKeyPressAsym(event) {
+            if (event.keyCode === 13 || event.which === 13) {
+                search('asym');
+            }
+        }
+
+        function copySearchURL(qType) {
+            const baseUrl = window.location.origin + window.location.pathname;
+            const url = new URL(baseUrl);
+            const searchCopyBtn = document.getElementById(`search-copy-btn-${qType}`);
+
+            const query = document.getElementById(`search-query-${qType}`).value;
+            url.searchParams.set('search', query);
+
+            const channels = document.getElementsByClassName('channel-checkbox');
+            let selected_channels = [];
+            for (i = 0; i < channels.length; i++) {
+                if (channels[i].checked) {
+                    selected_channels.push(channels[i].id);
+                }
+            }
+            if (selected_channels.length > 0) {
+                url.searchParams.set('channels', selected_channels.join('+'));
+            }
+            if (qType == 'asym') {
+                url.searchParams.set('asym', 'true');
+            }
+
+            // Copy the URL to clipboard
+            navigator.clipboard.writeText(url).then(() => {
+                // Create the notification element
+                let notification = document.createElement("div");
+                notification.textContent = "Copied!";
+                notification.className = "notification";
+
+                // Append and remove the notification after 1 seconds
+                searchCopyBtn.appendChild(notification);
+                setTimeout(() => notification.remove(), 1000);
+            });
+        }
+
+        // Function to get the slug from the URL
+        function getSlugFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let asym = urlParams.has('asym')
+            const query = urlParams.get('search');
+            const channels = urlParams.get('channels');
+            return [asym, query ? decodeURIComponent(query) : '', channels ? channels : ''];
+        }
+
+        window.onload = function () {
+            document.getElementById('search-query-sym').addEventListener('keypress', handleKeyPressSym);
+            document.getElementById('search-query-asym').addEventListener('keypress', handleKeyPressAsym);
+
+            // Populate the search bar with slug from URL
+            const slug = getSlugFromURL();
+            const [asym, query, channels] = slug;
+            if (!query) {
+                return;
+            }
+
+            const re = /[,\+\ ]|%20/
+            channels.split(re).forEach(channel => {
+                const checkbox = document.getElementById(channel);
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+            });
+            if (!asym) {
+                document.getElementById('search-query-sym').value = query;
+                search('sym');
+            }
+            else {
+                document.getElementById('search-query-asym').value = query;
+                search('asym');
+            }
         };
     </script>
-    
+
 </head>
+
 <body>
     <div class="search-bar-container">
-        <h1>Based Camp with Malcolm & Simone Collins</h1>
+        <h1>YouTube Channel Search Indexer</h1>
         <div>
-            <h2>Semantic Search</h2>
-            <input type="text" id="search-query" placeholder="Enter search query" class="search-bar">
-            <button onclick="search()">Search</button>
+            <h2>Search Similar Phrase or Concept</h2>
+            <input type="text" id="search-query-sym" placeholder="Enter phrase" class="search-bar">
+            <button onclick="search('sym')">Search</button>
+            <button onclick="copySearchURL('sym')" id="search-copy-btn-sym" style="position: relative;">
+                Copy Search Link
+            </button>
+        </div>
+        <div>
+            <h2>Search Answer to Question</h2>
+            <input type="text" id="search-query-asym" placeholder="Enter question" class="search-bar">
+            <button onclick="search('asym')">Search</button>
+            <button onclick="copySearchURL('asym')" id="search-copy-btn-asym" style="position: relative;">
+                Copy Search Link
+            </button>
+        </div>
+        <div>
+            <h2>Select Channels</h2>
+            <div class="channels-container">
+                <div class="channel-container">
+                    <label for="based_camp">Based Camp</label>
+                    <input type="checkbox" id="based_camp" class="channel-checkbox">
+                </div>
+                <div class="channel-container">
+                    <label for="balaji_srinivasan">Balaji Srinivasan</label>
+                    <input type="checkbox" id="balaji_srinivasan" class="channel-checkbox">
+                </div>
+                <div class="channel-container">
+                    <label for="hormozis">Hormozis</label>
+                    <input type="checkbox" id="hormozis" class="channel-checkbox">
+                </div>
+                <div class="channel-container">
+                    <label for="y_combinator">Y Combinator</label>
+                    <input type="checkbox" id="y_combinator" class="channel-checkbox">
+                </div>
+                <div class="channel-container">
+                    <label for="charter_cities_institute">Charter Cities Institute</label>
+                    <input type="checkbox" id="charter_cities_institute" class="channel-checkbox">
+                </div>
+                <div class="channel-container">
+                    <label for="startup_societies_foundation">Startup Societies Foundation</label>
+                    <input type="checkbox" id="startup_societies_foundation" class="channel-checkbox">
+                </div>
+                <div class="channel-container">
+                    <label for="free_cities_foundation">Free Cities Foundation</label>
+                    <input type="checkbox" id="free_cities_foundation" class="channel-checkbox">
+                </div>
+            </div>
         </div>
     </div>
     <div id="results" class="results-container">

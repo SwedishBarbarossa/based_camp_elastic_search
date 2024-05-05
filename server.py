@@ -2,14 +2,18 @@ import os
 import threading
 import time
 from datetime import datetime, timedelta
+from typing import Literal
 
 import numpy as np
+import numpy.typing as npt
 import uvicorn
 from fastapi import FastAPI
+from qdrant_client import QdrantClient
 from sentence_transformers import SentenceTransformer
 
 from gRPC.server import serve as grpc_server
-from web_server.src.server_funcs import build_index, get_index
+from web_server.src.qdrant_funcs import add_to_qdrant, query_qdrant
+from web_server.src.server_funcs import remove_added_npy_files
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 EMBEDDINGS_DIR = os.path.join(ROOT, "server_embeddings")
@@ -17,31 +21,44 @@ EMBEDDINGS_DIR = os.path.join(ROOT, "server_embeddings")
 WORK_DIR = os.path.join(ROOT, "web_server", "src")
 INDEX_NAME = os.path.join(WORK_DIR, "saved", "index.ann")
 MAP_NAME = os.path.join(WORK_DIR, "saved", "index_value_map")
+QDRANT_DIR = os.path.join(WORK_DIR, "qdrant_data")
 
 STATIC_PATH = os.path.join(WORK_DIR, "static")
 INDEX_PATH = os.path.join(STATIC_PATH, "index.html")
 STYLE_PATH = os.path.join(STATIC_PATH, "style.css")
+RECORD_PATH = os.path.join(STATIC_PATH, "added.txt")
 
-DIM = 384
-REBUILD_COOLDOWN = timedelta(minutes=1)
-REBUILD_SLEEP = 600
+SYM_DIM = 384
+ASYM_DIM = 384
+REBUILD_COOLDOWN = timedelta(seconds=10)
+REBUILD_SLEEP = 60 * 10
+
+EXISTING_CHANNELS = [
+    "based_camp",
+    "balaji_srinivasan",
+    "hormozis",
+    "y_combinator",
+    "charter_cities_institute",
+    "startup_societies_foundation",
+    "free_cities_foundation",
+]
 
 fapi_app = FastAPI()
 last_grpc_call_time: datetime | None = datetime.now()
 last_index_rebuild: datetime | None = None
 lock = threading.Lock()
 
-global index
-index = None
-global index_map
-index_map = {}
-
 # Load the SentenceTransformer model
-model = SentenceTransformer("all-MiniLM-L6-v2")
+SYMMETRIC_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
+ASYMMETCIC_MODEL = SentenceTransformer("msmarco-MiniLM-L-6-v3")
 
 
-def rebuild_annoy_index():
-    global last_grpc_call_time, index, index_map, last_index_rebuild
+# Start the Qdrant client
+qdant_client = QdrantClient(host="qdrant", grpc_port=6334, prefer_grpc=True)
+
+
+def update_qdrant():
+    global last_grpc_call_time, last_index_rebuild
     wait_seconds = np.inf
     while True:
         with lock:
@@ -52,43 +69,65 @@ def rebuild_annoy_index():
                 wait_seconds = REBUILD_SLEEP
 
         if wait_seconds == 0:
-            # Rebuild the Annoy index here
-            print("Rebuilding Annoy index...")
-            index, index_map = build_index(DIM, INDEX_NAME, MAP_NAME, EMBEDDINGS_DIR)
-            last_index_rebuild = datetime.now()
-            print("Annoy index rebuilt.")
+            print("Updating Qdrant...")
+            add_to_qdrant(
+                EMBEDDINGS_DIR,
+                RECORD_PATH,
+                qdant_client,
+                {"asymmetric": ASYM_DIM, "symmetric": SYM_DIM},
+            )
+            remove_added_npy_files(EMBEDDINGS_DIR, RECORD_PATH)
+            print("Qdrant updated.")
 
             # Reset the timer
             with lock:
+                last_index_rebuild = datetime.now()
                 last_grpc_call_time = None
 
         time.sleep(wait_seconds)
 
 
 @fapi_app.get("/search/")
-async def search(query: str | None = None):
+async def search(
+    query: str | None = None,
+    channels: str | None = None,
+    q_type: Literal["sym", "asym"] = "sym",
+):
+    parsed_channels = ["based_camp"]
     if not query:
-        query = "total fertility rate collapse"
+        query = "Hello! Today we are talking about"
+
+    if channels:
+        parsed_channels = [x for x in channels.split(",") if x in EXISTING_CHANNELS]
+
+    if q_type not in ["sym", "asym"]:
+        q_type = "sym"
 
     if len(query) > 100:
         query = query[:100]
 
-    global index, index_map
-    if index is None:
-        print("get index")
-        index, index_map = get_index(DIM, INDEX_NAME, MAP_NAME, EMBEDDINGS_DIR)
+    search_vector: npt.NDArray[np.float32] = (
+        SYMMETRIC_MODEL.encode(query)
+        if q_type == "sym"
+        else ASYMMETCIC_MODEL.encode(query)
+    )  # type: ignore
 
-    search_vector = model.encode(query)
-    indices, distances = index.get_nns_by_vector(
-        search_vector, 100, search_k=10, include_distances=True
-    )
-    results = [index_map[index] for index in indices]
-    return {"query": query, "results": zip(results, distances)}
+    results = query_qdrant(parsed_channels, search_vector, qdant_client, q_type)
+
+    return {
+        "channels": parsed_channels,
+        "query": query,
+        "q_type": q_type,
+        "results": results,
+    }
 
 
-# TODO: add api for current embeddings in folder
-
-# TODO: add api for latest index rebuild
+@fapi_app.get("/latest_rebuild")
+async def latest_rebuild():
+    global last_index_rebuild
+    if not last_index_rebuild:
+        return {"last_rebuild": "never"}
+    return {"last_rebuild": last_index_rebuild}
 
 
 def last_grpc_call_time_callback(*args, **kwargs):
@@ -97,7 +136,7 @@ def last_grpc_call_time_callback(*args, **kwargs):
 
 
 # Start the rebuild index thread
-rebuild_thread = threading.Thread(target=rebuild_annoy_index, daemon=True)
+rebuild_thread = threading.Thread(target=update_qdrant, daemon=True)
 rebuild_thread.start()
 
 # Start the gRPC server thread

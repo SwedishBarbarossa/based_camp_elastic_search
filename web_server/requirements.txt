@@ -1,7 +1,7 @@
 fastapi[all]
-annoy
 numpy
 uvicorn
 sentence-transformers
 grpcio
 grpcio-tools
+qdrant-client
