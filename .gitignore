@@ -8,3 +8,4 @@ server_embeddings
 qdrant_storage
 web_server/src/static/added.txt
 nginx_cache
+env/prod.env

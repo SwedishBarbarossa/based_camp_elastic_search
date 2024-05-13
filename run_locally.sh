@@ -1,19 +1,16 @@
-# launch server
+# Build server
+sudo docker compose build
+
+# Launch server
 sudo docker compose up -d
 
+# Activate virtual environment
 python3 -m venv .venv
+source .venv/bin/activate
 
-if [ -f .venv/bin/activate ]; then # Linux system
-    source .venv/bin/activate
-elif [ -f .venv/Scripts/activate.bat ]; then # Windows system
-    source .venv/Scripts/activate
-else
-    echo "Failed to activate virtual environment"
-    exit 1
-fi
-
+# Install dependencies
 pip3 install wheel
 pip3 install -r video_processing/requirements.txt
 
-# launch processor
+# Launch processor
 python3 processor.py

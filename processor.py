@@ -3,6 +3,7 @@ import time
 
 import dotenv
 import numpy as np
+import requests
 from tqdm import tqdm
 
 root = os.path.dirname(os.path.abspath(__file__))
@@ -30,6 +31,8 @@ if __name__ == "__main__":
                 arr = np.load(f"embeddings/{embedding}")
                 res = send_embedding(embedding.removesuffix(".npy"), arr)
                 p_bar.set_postfix({"res": res})
+
+            p_bar.close()
 
         print(f"Ending at {time.ctime()}\n--------------------------------------\n")
         time.sleep(60 * 60)

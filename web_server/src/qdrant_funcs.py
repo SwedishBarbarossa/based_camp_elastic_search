@@ -83,11 +83,11 @@ def add_to_qdrant(
 
     already_added: set[str] = set()
     if os.path.exists(record_path):
-        with open(record_path, "r") as f:
+        with open(record_path, "r", encoding="utf-8") as f:
             already_added = {x.strip() for x in f.readlines()}
     else:
         # create the file
-        with open(record_path, "w") as f:
+        with open(record_path, "w", encoding="utf-8") as f:
             pass
 
     os.makedirs(embeddings_dir, exist_ok=True)
@@ -119,5 +119,5 @@ def add_to_qdrant(
     client.upload_points(collection_name="asym", points=asym_points)
 
     # add to record
-    with open(record_path, "a") as f:
+    with open(record_path, "a", encoding="utf-8") as f:
         f.writelines(f"{x}\n" for x in embeddings)

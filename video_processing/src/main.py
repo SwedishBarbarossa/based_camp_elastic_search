@@ -26,7 +26,7 @@ class CreatorConfig(TypedDict):
 
 def load_config(config_path: str) -> dict[str, CreatorConfig]:
     """Load configuration from YAML file."""
-    with open(config_path, "r") as file:
+    with open(config_path, "r", encoding="utf-8") as file:
         init_config = yaml.safe_load(file)
 
     # format config
@@ -54,7 +54,7 @@ def rip_audio_files(
         open(age_restricted_path, "w")
 
     age_restricted = set()
-    with open(age_restricted_path, "r") as f:
+    with open(age_restricted_path, "r", encoding="utf-8") as f:
         for line in f:
             age_restricted.add(line.strip())
 
@@ -126,7 +126,7 @@ def rip_audio_files(
             if video_id in age_restricted:
                 continue
 
-            with open(age_restricted_path, "a") as f:
+            with open(age_restricted_path, "a", encoding="utf-8") as f:
                 f.write(f"{video_id}\n")
         except Exception as e:
             print(f"Error downloading {video_id}: {e}")
@@ -208,7 +208,7 @@ def transcribe_audio_files(audio_dir: str, transcripts_dir: str):
         # if transcript already exists and is longer than 10 lines, skip
         skip = False
         if os.path.exists(output_path):
-            with open(output_path, "r") as f:
+            with open(output_path, "r", encoding="utf-8") as f:
                 if len(f.readlines()) > 10:
                     skip = True
 
@@ -218,7 +218,7 @@ def transcribe_audio_files(audio_dir: str, transcripts_dir: str):
             continue
 
         result = model.transcribe(file_path, word_timestamps=True, language="en")
-        with open(output_path, "w") as output_file:
+        with open(output_path, "w", encoding="utf-8") as output_file:
             for segment in result["segments"]:
                 text = segment["text"]  # type: ignore
                 if not text.strip():
@@ -271,7 +271,7 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str, channel: str):
         # --- get the time stamps from file ---
         # Step 1: Parse transcript lines
         file_path = os.path.join(transcripts_dir, filename)
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
             if len(lines) < 2:
                 continue
@@ -349,7 +349,7 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str, channel: str):
 
 
 def get_uploaded_files(config_path: str) -> list[str]:
-    with open(config_path, "r") as f:
+    with open(config_path, "r", encoding="utf-8") as f:
         conf = yaml.safe_load(f)
 
     address: str = conf["address"]
