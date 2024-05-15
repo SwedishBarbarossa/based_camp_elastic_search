@@ -3,7 +3,6 @@ import time
 
 import dotenv
 import numpy as np
-import requests
 from tqdm import tqdm
 
 root = os.path.dirname(os.path.abspath(__file__))
@@ -35,4 +34,6 @@ if __name__ == "__main__":
             p_bar.close()
 
         print(f"Ending at {time.ctime()}\n--------------------------------------\n")
+        if not RIP_AUDIO_FILES:
+            break
         time.sleep(60 * 60)
