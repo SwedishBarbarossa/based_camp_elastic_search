@@ -15,13 +15,23 @@ services:
         required: false
     depends_on:
       - qdrant
+    restart: "always"
+    tty: true
+    networks:
+      - internal
 
   qdrant:
     image: qdrant/qdrant:latest
     volumes:
       - ./qdrant_storage/:/qdrant/storage/
+    restart: "always"
+    tty: true
+    networks:
+      - internal
       
-  nginx:
+  nginx-nossl:
+    profiles:
+      - nossl
     image: nginx:stable-alpine
     volumes:
       - ./web_server/config/nginx.conf:/etc/nginx/nginx.conf:ro
@@ -31,4 +41,37 @@ services:
       - web_server
     ports:
       - 80:80
-      - 20023:20023
+      - 20023:50051
+    restart: "always"
+    tty: true
+    networks:
+      internal:
+        aliases:
+          - nginx
+
+  nginx-ssl:
+    profiles:
+      - ssl
+    image: nginx:stable-alpine
+    volumes:
+      - ./web_server/config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./web_server/src/static/:/app/static/:ro
+      - ./nginx_cache/:/app/cache/:rw
+      - /etc/letsencrypt/live/&{DOMAIN_NAME}/fullchain.pem:/etc/nginx/certs/fullchain.pem
+      - /etc/letsencrypt/live/&{DOMAIN_NAME}/privkey.pem:/etc/nginx/certs/privkey.pem
+    depends_on:
+      - web_server
+    ports:
+      - 80:80
+      - 443:443
+      - 20023:50051
+    restart: "always"
+    tty: true
+    networks:
+      internal:
+        aliases:
+          - nginx
+
+networks:
+  internal:
+    driver: bridge

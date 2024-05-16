@@ -2,7 +2,7 @@
 sudo docker compose build
 
 # Launch server
-sudo docker compose up -d
+sudo docker compose --profile nossl up -d
 
 # Activate virtual environment
 python3 -m venv .venv
