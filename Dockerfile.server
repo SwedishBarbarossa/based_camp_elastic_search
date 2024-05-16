@@ -24,6 +24,9 @@ COPY web_server/requirements.txt .
 RUN pip3 install --no-cache-dir wheel
 RUN pip3 install --no-cache-dir -r requirements.txt
 
+# Download the transformer models
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2'); SentenceTransformer('msmarco-MiniLM-L-6-v3')"
+
 # Copy project
 COPY gRPC gRPC
 COPY web_server web_server
