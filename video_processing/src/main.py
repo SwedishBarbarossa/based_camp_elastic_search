@@ -349,15 +349,9 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str, channel: str):
 
 
 def get_uploaded_files(config_path: str) -> list[str]:
-    with open(config_path, "r", encoding="utf-8") as f:
-        conf = yaml.safe_load(f)
-
-    address: str = conf["address"]
-    try:
-        file = requests.get(f"{address}/added.txt")
-        return file.text.split("\n")
-    except:
-        return []
+    address: str = os.environ["HOST_ADDRESS"]
+    file = requests.get(f"https://{address}/added.txt")
+    return file.text.split("\n")
 
 
 def main(rip=False) -> list[str]:

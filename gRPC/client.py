@@ -6,7 +6,7 @@ import numpy.typing as npt
 
 from . import service_pb2, service_pb2_grpc
 
-HOST_ADDRESS = os.environ["HOST_ADDRESS"]
+HOST_IP = os.environ["HOST_IP"]
 GRPC_PORT = os.environ["GRPC_PORT"]
 
 _AUTH_HEADER_KEY = "authorization"
@@ -28,7 +28,7 @@ class AuthInterceptor(grpc.UnaryUnaryClientInterceptor):
 
 
 def send_embedding(filename: str, array: npt.NDArray[np.float32]) -> str:
-    channel = grpc.insecure_channel(f"{HOST_ADDRESS}:{GRPC_PORT}")
+    channel = grpc.insecure_channel(f"{HOST_IP}:{GRPC_PORT}")
     intercept_channel = grpc.intercept_channel(
         channel, AuthInterceptor(_AUTH_HEADER_VALUE)
     )
