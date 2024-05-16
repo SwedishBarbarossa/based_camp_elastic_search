@@ -78,9 +78,6 @@ def add_to_qdrant(
     create_qdrant_collection("asym", client, dims["asymmetric"])
     create_qdrant_collection("sym", client, dims["symmetric"])
 
-    sym_points = []
-    asym_points = []
-
     already_added: set[str] = set()
     if os.path.exists(record_path):
         with open(record_path, "r", encoding="utf-8") as f:
@@ -101,7 +98,11 @@ def add_to_qdrant(
     # clear record
     already_added = set()
 
-    for embedding, (q_type, channel, id, start, end) in zip(embeddings, payloads):
+    sym_points = []
+    asym_points = []
+    for i, (embedding, (q_type, channel, id, start, end)) in enumerate(
+        zip(embeddings, payloads)
+    ):
         vector = np.load(embeddings_dir + "/" + embedding)
 
         point = models.PointStruct(
@@ -114,6 +115,12 @@ def add_to_qdrant(
             sym_points.append(point)
         else:
             asym_points.append(point)
+
+        if i % 1000 == 999:
+            client.upload_points(collection_name="sym", points=sym_points)
+            client.upload_points(collection_name="asym", points=asym_points)
+            sym_points = []
+            asym_points = []
 
     client.upload_points(collection_name="sym", points=sym_points)
     client.upload_points(collection_name="asym", points=asym_points)
