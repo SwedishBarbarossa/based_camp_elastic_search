@@ -353,8 +353,11 @@ def get_uploaded_files(config_path: str) -> list[str]:
         conf = yaml.safe_load(f)
 
     address: str = conf["address"]
-    file = requests.get(f"{address}/added.txt")
-    return file.text.split("\n")
+    try:
+        file = requests.get(f"{address}/added.txt")
+        return file.text.split("\n")
+    except:
+        return []
 
 
 def main(rip=False) -> list[str]:
