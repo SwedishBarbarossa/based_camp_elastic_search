@@ -234,12 +234,12 @@ def transcribe_audio_files(audio_dir: str, transcripts_dir: str):
         )
         with open(output_path, "w", encoding="utf-8") as output_file:
             for segment in result["segments"]:
-                text = segment["text"].strip()  # type: ignore
-                if not text or len(text) == 1:
+                text = segment["text"].strip()
+                if not text or len(text) == 1 or text == "¶¶":
                     continue
 
-                start = segment["start"]  # type: ignore
-                end = segment["end"]  # type: ignore
+                start = segment["start"]
+                end = segment["end"]
                 output_file.write(f"[{start:.3f},{end:.3f}] {text}\n")
 
         # delete the audio file
