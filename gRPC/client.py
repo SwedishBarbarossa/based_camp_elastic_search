@@ -1,4 +1,5 @@
 import os
+from typing import Callable
 
 import grpc
 import numpy as np
@@ -27,13 +28,16 @@ class AuthInterceptor(grpc.UnaryUnaryClientInterceptor):
         return continuation(client_call_details, request)
 
 
-def send_embedding(filename: str, array: npt.NDArray[np.float32]) -> str:
+def send_embeddings(
+    embeddings: dict[str, npt.NDArray[np.float32]], callback: Callable[[str], None]
+):
     channel = grpc.insecure_channel(f"{HOST_IP}:{GRPC_PORT}")
     intercept_channel = grpc.intercept_channel(
         channel, AuthInterceptor(_AUTH_HEADER_VALUE)
     )
     stub = service_pb2_grpc.StringAndArrayServiceStub(intercept_channel)
-    response = stub.ProcessData(
-        service_pb2.DataRequest(input_string=filename, array=array)
-    )
-    return "Client received: " + response.result
+    for filename, array in embeddings.items():
+        response = stub.ProcessData(
+            service_pb2.DataRequest(input_string=filename, array=array)
+        )
+        callback("Client received: " + response.result)
