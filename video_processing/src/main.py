@@ -364,7 +364,7 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str, channel: str):
 
 def get_uploaded_files(config_path: str) -> list[str]:
     address: str = os.environ["HOST_ADDRESS"]
-    file = requests.get(f"https://{address}/added.txt")
+    file = requests.get(f"{address}/added.txt")
     return file.text.split("\n")
 
 
