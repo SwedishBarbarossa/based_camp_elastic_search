@@ -171,12 +171,14 @@ def transcribe_audio_files(audio_dir: str, transcripts_dir: str):
     # Load the Whisper model
     # You can choose another model size as needed
     has_cuda = torch.cuda.is_available()
+    device = "cuda" if has_cuda else "cpu"
     model = whisperx.load_model(
         "large-v3",
-        device="cuda" if has_cuda else "cpu",
+        device=device,
         compute_type="float16",
         language="en",
     )
+    model_a, metadata = whisperx.load_align_model(language_code="en", device=device)
 
     # create a list of audio files that already exist and is > 1 mb
     audio_files: set[str] = {
@@ -222,6 +224,14 @@ def transcribe_audio_files(audio_dir: str, transcripts_dir: str):
 
         audio = whisperx.load_audio(file_path)
         result = model.transcribe(audio, batch_size=16, language="en")
+        result = whisperx.align(
+            result["segments"],
+            model_a,
+            metadata,
+            audio,
+            device,
+            return_char_alignments=False,
+        )
         with open(output_path, "w", encoding="utf-8") as output_file:
             for segment in result["segments"]:
                 text = segment["text"].strip()  # type: ignore
