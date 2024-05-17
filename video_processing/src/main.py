@@ -8,7 +8,7 @@ import pytube
 import pytube.exceptions
 import requests
 import torch
-import whisper
+import whisperx
 import yaml
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
@@ -171,8 +171,11 @@ def transcribe_audio_files(audio_dir: str, transcripts_dir: str):
     # Load the Whisper model
     # You can choose another model size as needed
     has_cuda = torch.cuda.is_available()
-    model = whisper.load_model(
-        "medium", device="cuda" if has_cuda else "cpu", in_memory=has_cuda
+    model = whisperx.load_model(
+        "large-v3",
+        device="cuda" if has_cuda else "cpu",
+        compute_type="float16",
+        language="en",
     )
 
     # create a list of audio files that already exist and is > 1 mb
@@ -217,11 +220,12 @@ def transcribe_audio_files(audio_dir: str, transcripts_dir: str):
             os.remove(file_path)
             continue
 
-        result = model.transcribe(file_path, word_timestamps=True, language="en")
+        audio = whisperx.load_audio(file_path)
+        result = model.transcribe(audio, batch_size=16, language="en")
         with open(output_path, "w", encoding="utf-8") as output_file:
             for segment in result["segments"]:
-                text = segment["text"]  # type: ignore
-                if not text.strip():
+                text = segment["text"].strip()  # type: ignore
+                if not text or len(text) == 1:
                     continue
 
                 start = segment["start"]  # type: ignore

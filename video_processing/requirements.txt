@@ -1,8 +1,8 @@
 pytube
 tqdm
-openai-whisper
 numpy
 sentence-transformers
 grpcio
 grpcio-tools
 python-dotenv
+whisperx @ git+https://github.com/m-bain/whisperX@main
