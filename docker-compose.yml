@@ -59,6 +59,8 @@ services:
       - ./nginx_cache/:/app/cache/:rw
       - /etc/letsencrypt/live/&{HOST_ADDRESS}/fullchain.pem:/etc/nginx/certs/fullchain.pem
       - /etc/letsencrypt/live/&{HOST_ADDRESS}/privkey.pem:/etc/nginx/certs/privkey.pem
+      - /etc/letsencrypt/live/www.&{HOST_ADDRESS}/fullchain.pem:/etc/nginx/certs/wwwfullchain.pem
+      - /etc/letsencrypt/live/www.&{HOST_ADDRESS}/privkey.pem:/etc/nginx/certs/wwwprivkey.pem
     depends_on:
       - web_server
     ports:
