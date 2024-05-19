@@ -43,4 +43,4 @@ if __name__ == "__main__":
         print(f"Ending at {time.ctime()}\n--------------------------------------\n")
         if not RIP_AUDIO_FILES:
             break
-        time.sleep(60 * 60)
+        time.sleep(60 * 60 * 3)
