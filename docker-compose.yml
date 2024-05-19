@@ -54,7 +54,7 @@ services:
       - ssl
     image: nginx:stable-alpine
     volumes:
-      - ./web_server/config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./web_server/config/nginx_ssl.conf:/etc/nginx/nginx.conf:ro
       - ./web_server/src/static/:/app/static/:ro
       - ./nginx_cache/:/app/cache/:rw
       - /etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem:/etc/nginx/certs/fullchain.pem
