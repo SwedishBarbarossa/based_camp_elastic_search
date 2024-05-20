@@ -21,3 +21,6 @@ Also implement this fix in Pytube if you wish to rip videos: https://github.com/
 1. Download the ffmpeg zip file from https://github.com/BtbN/FFmpeg-Builds/releases (or from unverified location here: https://www.videohelp.com/software/ffmpeg) and extract 'ffmpeg.exe' into the root folder of this repository.
 
 2. Finish the ordinary setup
+
+### Required fixes for pytube before ripping new videos
+https://github.com/pytube/pytube/pull/1409/commits/42a7d8322dd7749a9e950baf6860d115bbeaedfc
