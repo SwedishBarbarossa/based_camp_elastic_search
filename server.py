@@ -42,6 +42,7 @@ EXISTING_CHANNELS = [
     "startup_societies_foundation",
     "free_cities_foundation",
     "james_lindsay",
+    "jordan_b_peterson",
 ]
 
 fapi_app = FastAPI()
