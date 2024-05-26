@@ -12,6 +12,7 @@ from qdrant_client import QdrantClient
 from sentence_transformers import SentenceTransformer
 
 from gRPC.server import serve as grpc_server
+from services.upload_comparison import calculate_checksum
 from web_server.src.qdrant_funcs import add_to_qdrant, query_qdrant
 from web_server.src.server_funcs import remove_added_npy_files
 
@@ -19,8 +20,6 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 EMBEDDINGS_DIR = os.path.join(ROOT, "server_embeddings")
 
 WORK_DIR = os.path.join(ROOT, "web_server", "src")
-INDEX_NAME = os.path.join(WORK_DIR, "saved", "index.ann")
-MAP_NAME = os.path.join(WORK_DIR, "saved", "index_value_map")
 QDRANT_DIR = os.path.join(WORK_DIR, "qdrant_data")
 
 STATIC_PATH = os.path.join(WORK_DIR, "static")
@@ -31,7 +30,7 @@ RECORD_PATH = os.path.join(STATIC_PATH, "added.txt")
 SYM_DIM = 384
 ASYM_DIM = 384
 REBUILD_COOLDOWN = timedelta(seconds=10)
-REBUILD_SLEEP = 60 * 10
+REBUILD_SLEEP = 60 * 5
 
 EXISTING_CHANNELS = [
     "based_camp",
@@ -60,6 +59,11 @@ qdant_client = QdrantClient(host="qdrant", grpc_port=6334, prefer_grpc=True)
 
 
 def update_qdrant():
+    """
+    Periodically updates the Qdrant index with new embeddings, ensuring updates
+    occur only after a cooldown period. Handles adding new data and cleaning up
+    old embeddings in a loop.
+    """
     global last_grpc_call_time, last_index_rebuild
     wait_seconds = np.inf
     while True:
@@ -130,6 +134,11 @@ async def latest_rebuild():
     if not last_index_rebuild:
         return {"last_rebuild": "never"}
     return {"last_rebuild": last_index_rebuild}
+
+
+@fapi_app.get("/added_hash")
+async def added_hash():
+    return calculate_checksum(RECORD_PATH)
 
 
 def last_grpc_call_time_callback(*args, **kwargs):
