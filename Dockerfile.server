@@ -30,4 +30,5 @@ RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTr
 # Copy project
 COPY gRPC gRPC
 COPY web_server web_server
+COPY services services
 COPY server.py server.py

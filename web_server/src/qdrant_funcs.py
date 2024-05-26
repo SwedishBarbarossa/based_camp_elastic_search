@@ -65,7 +65,10 @@ def create_qdrant_collection(collection: str, client: QdrantClient, dim: int) ->
 
 def _name_to_payload(name: str) -> tuple[str, str, str, int, int]:
     split = name.removesuffix(".npy").split(" ")
-    return split[0], split[1], split[2], int(split[3]), int(split[4])
+    try:
+        return split[0], split[1], split[2], int(split[3]), int(split[4])
+    except IndexError:
+        raise ValueError(f"Invalid name: {name}")
 
 
 def add_to_qdrant(
@@ -127,4 +130,4 @@ def add_to_qdrant(
 
     # add to record
     with open(record_path, "a", encoding="utf-8") as f:
-        f.writelines(f"{x}\n" for x in embeddings)
+        f.writelines(f"{x}\n" for x in sorted(embeddings))

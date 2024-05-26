@@ -13,6 +13,8 @@ import yaml
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 
+from services.upload_comparison import calculate_checksum
+
 
 class ConfigLink(TypedDict):
     link: str
@@ -268,13 +270,16 @@ def _split_long_segments(
 
 
 def encode_transcripts(transcripts_dir: str, embeddings_dir: str, channel: str):
-    # Transcript line pattern
-    pattern = re.compile(r"\[(\d+\.\d+),(\d+\.\d+)\]\s+(.*)")
+    if not os.path.exists(transcripts_dir):
+        return
 
-    segments: list[tuple[str, str]] = []
     files = os.listdir(transcripts_dir)
     if not files:
         return
+
+    # Transcript line pattern
+    pattern = re.compile(r"\[(\d+\.\d+),(\d+\.\d+)\]\s+(.*)")
+    segments: list[tuple[str, str]] = []
 
     p_bar = tqdm(files)
     for filename in p_bar:
@@ -362,13 +367,34 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str, channel: str):
             np.save(asym_seg_path, embeddings)
 
 
-def get_uploaded_files(config_path: str) -> list[str]:
+def get_uploaded_files(added_record: str) -> list[str]:
+    # get local file hash
+    local_hash = ""
+    local_file_path = added_record
+    if os.path.exists(local_file_path):
+        local_hash = calculate_checksum(local_file_path)
+
     address: str = os.environ["HOST_ADDRESS"]
-    file = requests.get(f"{address}/added.txt")
-    return file.text.split("\n")
+    # get remote file hash
+    remote_hash_response = requests.get(f"{address}/added_hash")
+    remote_hash = remote_hash_response.text.strip('"')
+
+    # if they don't match, save the remote file to local_file_path
+    print(f"local hash: {local_hash}\nremote hash: {remote_hash}")
+    if local_hash != remote_hash:
+        file_response = requests.get(f"{address}/added.txt")
+        with open(local_file_path, "w", encoding="utf-8") as f:
+            f.write(file_response.text)
+
+        print(f"new local hash: {calculate_checksum(local_file_path)}")
+
+        return file_response.text.split("\n")
+
+    with open(local_file_path, "r", encoding="utf-8") as f:
+        return f.read().split("\n")
 
 
-def main(rip=False) -> list[str]:
+def main(added_record: str, rip=False) -> list[str]:
     root = os.path.dirname(os.path.abspath(__file__)).split("video_processing")[0]
     audio_dir = os.path.join(root, "audio")
     transcripts_dir = os.path.join(root, "transcriptions")
@@ -399,7 +425,7 @@ def main(rip=False) -> list[str]:
         encode_transcripts(creator_transcripts_dir, embeddings_dir, creator)
 
     # return the previously uploaded files on the server
-    return get_uploaded_files(config_path)
+    return get_uploaded_files(added_record)
 
 
 if __name__ == "__main__":
