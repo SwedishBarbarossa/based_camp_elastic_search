@@ -3,7 +3,7 @@ rem Build server
 docker compose build
 
 rem Launch server
-docker compose up -d
+docker compose --profile nossl up -d
 
 rem Activate virtual environment
 python -m venv .venv
