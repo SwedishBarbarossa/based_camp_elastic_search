@@ -19,13 +19,15 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Install pip requirements
-COPY web_server/requirements.txt .
 RUN pip3 install --no-cache-dir wheel
-RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Download the transformer models
+RUN pip3 install --no-cache-dir sentence-transformers
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2'); SentenceTransformer('msmarco-MiniLM-L-6-v3')"
+
+# Install pip requirements
+COPY web_server/requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copy project
 COPY gRPC gRPC
