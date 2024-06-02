@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YT Semantic Search</title>
+    <link rel="stylesheet" href="reset.css">
+    <link rel="stylesheet" href="layout.css">
+    <link rel="stylesheet" href="component.css">
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="main.js" defer></script>
+</head>
+
+<body>
+    <div class="sidebar">
+        <h2>Select Channels</h2>
+        <div class="channels-container">
+            <div class="channel-container" id="based_camp">
+                <label for="based_camp">Based Camp</label>
+            </div>
+            <div class="channel-container" id="balaji_srinivasan">
+                <label for="balaji_srinivasan">Balaji Srinivasan</label>
+            </div>
+            <div class="channel-container" id="hormozis">
+                <label for="hormozis">Hormozis</label>
+            </div>
+            <div class="channel-container" id="y_combinator">
+                <label for="y_combinator">Y Combinator</label>
+            </div>
+            <div class="channel-container" id="charter_cities_institute">
+                <label for="charter_cities_institute">Charter Cities Institute</label>
+            </div>
+            <div class="channel-container" id="startup_societies_foundation">
+                <label for="startup_societies_foundation">Startup Societies Foundation</label>
+            </div>
+            <div class="channel-container" id="free_cities_foundation">
+                <label for="free_cities_foundation">Free Cities Foundation</label>
+            </div>
+            <div class="channel-container" id="james_lindsay">
+                <label for="james_lindsay">James Lindsay</label>
+            </div>
+            <div class="channel-container" id="jordan_b_peterson">
+                <label for="jordan_b_peterson">Jordan B Peterson</label>
+            </div>
+        </div>
+    </div>
+    <div class="main-content">
+        <div id="loading-spinner" style="display: none;">Loading...</div>
+        <div class="search-bar-container">
+            <div class="search-bar-section">
+                <h2>Search Similar Phrase or Concept</h2>
+                <input type="text" id="search-query-sym" placeholder="Enter phrase" class="search-bar">
+                <div class="search-bar-buttons">
+                    <button onclick="search('sym')">Search</button>
+                    <button onclick="copySearchURL('sym')" id="search-copy-btn-sym" style="position: relative;">
+                        Copy Search Link
+                    </button>
+                </div>
+            </div>
+            <div class="search-bar-section">
+                <h2>Search Answer to Question</h2>
+                <input type="text" id="search-query-asym" placeholder="Enter question" class="search-bar">
+                <div class="search-bar-buttons">
+                    <button onclick="search('asym')">Search</button>
+                    <button onclick="copySearchURL('asym')" id="search-copy-btn-asym" style="position: relative;">
+                        Copy Search Link
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="results" class="results-container">
+            <!-- Results with video embeds and timestamp selectors will be displayed here -->
+        </div>
+    </div>
+</body>
+
+</html>
