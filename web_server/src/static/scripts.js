@@ -54,7 +54,7 @@ async function search(q_type) {
 
     let groupedSegments = segments.reduce((acc, segment) => {
         if (!acc[segment.videoId]) {
-            acc[segment.videoId] = {'topScore':segment.score, 'segments':[]};
+            acc[segment.videoId] = { 'topScore': segment.score, 'segments': [] };
         } else {
             acc[segment.videoId].topScore = Math.max(segment.score, acc[segment.videoId].topScore);
         }
@@ -201,11 +201,11 @@ function toggleChannelSelection(event) {
     event.currentTarget.classList.toggle('selected');
 }
 
-function toggleVideoDisplay(embeddedVideoExists, videoId, toggleEmbedBtn, videoContainer, contentContainer, forceShow = false){
+function toggleVideoDisplay(embeddedVideoExists, videoId, toggleEmbedBtn, videoContainer, contentContainer, forceShow = false) {
     let currentlyShowing = (videoContainer.parentNode == null) ? false : true;
     let targetShowing = forceShow ? true : (!currentlyShowing);
 
-    if (currentlyShowing !== targetShowing){
+    if (currentlyShowing !== targetShowing) {
         if (targetShowing) {
             contentContainer.prepend(videoContainer);
             toggleEmbedBtn.textContent = "Hide Video";
