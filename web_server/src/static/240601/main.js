@@ -54,9 +54,12 @@ async function search(q_type) {
 
     let groupedSegments = segments.reduce((acc, segment) => {
         if (!acc[segment.videoId]) {
-            acc[segment.videoId] = [];
+            acc[segment.videoId] = {'topScore':segment.score, 'segments':[]};
+        } else {
+            acc[segment.videoId].topScore = Math.max(segment.score, acc[segment.videoId].topScore);
         }
-        acc[segment.videoId].push(segment);
+
+        acc[segment.videoId]['segments'].push(segment);
         return acc;
     }, {});
 
@@ -70,12 +73,13 @@ async function search(q_type) {
         videoContainer.appendChild(headerContainer);
 
         const toggleEmbedBtn = document.createElement("button");
-        toggleEmbedBtn.textContent = "Show/Hide Video";
+        toggleEmbedBtn.textContent = "Show Video";
         headerContainer.appendChild(toggleEmbedBtn);
 
-        const videoTitle = document.createElement("h3");
-        videoTitle.textContent = `Video ID: ${videoId}`;
-        headerContainer.appendChild(videoTitle);
+        let topScore = groupedSegments[videoId].topScore;
+        const segmentTitle = document.createElement("h3");
+        segmentTitle.textContent = `Top Score: ${topScore.toFixed(3)}`;
+        headerContainer.appendChild(segmentTitle);
 
         let iframe, scoreContainer;
         const contentContainer = document.createElement("div");
@@ -101,7 +105,7 @@ async function search(q_type) {
                 scoreContainer.className = "score-container";
                 contentContainer.appendChild(scoreContainer);
 
-                groupedSegments[videoId].sort((a, b) => b.score - a.score).forEach(({ start, end, score }) => {
+                groupedSegments[videoId]['segments'].sort((a, b) => b.score - a.score).forEach(({ start, end, score }) => {
                     const videoLink = `https://www.youtube.com/watch?v=${videoId}&t=${start}s`;
 
                     let entryContainer = document.createElement("div");
@@ -139,12 +143,16 @@ async function search(q_type) {
 
                     entryContainer.appendChild(controlsContainer);
                     scoreContainer.appendChild(entryContainer);
+                    
+                    toggleEmbedBtn.textContent = "Hide Video";
                 });
             } else {
-                iframe.remove();
-                iframe = null;
-                if (scoreContainer) {
-                    scoreContainer.remove();
+                if (contentContainer.parentNode == null) {
+                    videoContainer.appendChild(contentContainer);
+                    toggleEmbedBtn.textContent = "Hide Video";
+                } else {
+                    contentContainer.remove();
+                    toggleEmbedBtn.textContent = "Show Video";
                 }
             }
         };
