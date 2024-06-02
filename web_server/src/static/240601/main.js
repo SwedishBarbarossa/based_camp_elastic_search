@@ -65,12 +65,12 @@ async function search(q_type) {
 
     // Create and append video containers
     Object.keys(groupedSegments).forEach(videoId => {
-        const videoContainer = document.createElement("div");
-        videoContainer.className = "video-container";
+        const resultContainer = document.createElement("div");
+        resultContainer.className = "result-container";
 
         const headerContainer = document.createElement("div");
         headerContainer.className = "header-container";
-        videoContainer.appendChild(headerContainer);
+        resultContainer.appendChild(headerContainer);
 
         const toggleEmbedBtn = document.createElement("button");
         toggleEmbedBtn.textContent = "Show Video";
@@ -81,83 +81,76 @@ async function search(q_type) {
         segmentTitle.textContent = `Top Score: ${topScore.toFixed(3)}`;
         headerContainer.appendChild(segmentTitle);
 
-        let iframe, scoreContainer;
         const contentContainer = document.createElement("div");
         contentContainer.className = "content-container";
-        videoContainer.appendChild(contentContainer);
+        resultContainer.appendChild(contentContainer);
+
+        const videoContainer = document.createElement("div");
+        videoContainer.className = "video-container";
+
+        let embeddedVideoExists = false;
+        let embeddedVideoCurrentlyShowing = false;
+        let scoreContainer;
+        scoreContainer = document.createElement("div");
+        scoreContainer.className = "score-container";
+
+        groupedSegments[videoId]['segments'].sort((a, b) => b.score - a.score).forEach(({ start, end, score }) => {
+            const videoLink = `https://www.youtube.com/watch?v=${videoId}&t=${start}s`;
+
+            let entryContainer = document.createElement("div");
+            entryContainer.className = "entry-container";
+
+            let controlsContainer = document.createElement("div");
+            controlsContainer.className = "controls-container";
+
+            let scoreDisplay = document.createElement("div");
+            scoreDisplay.textContent = `Score: ${score.toFixed(3)}`;
+
+            let copyBtn = document.createElement("button");
+            copyBtn.textContent = "Copy Link";
+            copyBtn.style.position = "relative";
+            copyBtn.onclick = function () {
+                navigator.clipboard.writeText(videoLink).then(() => {
+                    let notification = document.createElement("div");
+                    notification.textContent = "Copied!";
+                    notification.className = "notification";
+                    copyBtn.appendChild(notification);
+                    setTimeout(() => notification.remove(), 1000);
+                });
+            };
+
+            let playBtn = document.createElement("button");
+            playBtn.textContent = "Play Timestamp";
+            playBtn.style.position = "relative";
+            playBtn.onclick = function () {
+                useTimeout = !embeddedVideoCurrentlyShowing;
+
+                embeddedVideoCurrentlyShowing = toggleVideoDisplay(embeddedVideoExists, videoId, toggleEmbedBtn, videoContainer, contentContainer, true
+                );
+                embeddedVideoExists = embeddedVideoExists || embeddedVideoCurrentlyShowing;
+
+                setTimeout(() => {
+                    players[videoId].seekTo(start);
+                    players[videoId].playVideo();
+                }, (useTimeout ? 500 : 0));
+            };
+
+            controlsContainer.appendChild(playBtn);
+            controlsContainer.appendChild(copyBtn);
+            controlsContainer.appendChild(scoreDisplay);
+
+            entryContainer.appendChild(controlsContainer);
+            scoreContainer.appendChild(entryContainer);
+        });
+
+        contentContainer.appendChild(scoreContainer);
 
         toggleEmbedBtn.onclick = function () {
-            if (!iframe) {
-                iframe = document.createElement("div");
-                iframe.id = `player-${videoId}`;
-                contentContainer.appendChild(iframe);
-
-                players[videoId] = new YT.Player(`player-${videoId}`, {
-                    height: '315',
-                    width: '560',
-                    videoId: videoId,
-                    events: {
-                        'onReady': onPlayerReady
-                    }
-                });
-
-                scoreContainer = document.createElement("div");
-                scoreContainer.className = "score-container";
-                contentContainer.appendChild(scoreContainer);
-
-                groupedSegments[videoId]['segments'].sort((a, b) => b.score - a.score).forEach(({ start, end, score }) => {
-                    const videoLink = `https://www.youtube.com/watch?v=${videoId}&t=${start}s`;
-
-                    let entryContainer = document.createElement("div");
-                    entryContainer.className = "entry-container";
-
-                    let controlsContainer = document.createElement("div");
-                    controlsContainer.className = "controls-container";
-
-                    let scoreDisplay = document.createElement("div");
-                    scoreDisplay.textContent = `Score: ${score.toFixed(3)}`;
-
-                    let copyBtn = document.createElement("button");
-                    copyBtn.textContent = "Copy Link";
-                    copyBtn.style.position = "relative";
-                    copyBtn.onclick = function () {
-                        navigator.clipboard.writeText(videoLink).then(() => {
-                            let notification = document.createElement("div");
-                            notification.textContent = "Copied!";
-                            notification.className = "notification";
-                            copyBtn.appendChild(notification);
-                            setTimeout(() => notification.remove(), 1000);
-                        });
-                    };
-
-                    let playBtn = document.createElement("button");
-                    playBtn.textContent = "Play Timestamp";
-                    playBtn.style.position = "relative";
-                    playBtn.onclick = function () {
-                        playVideoAtTime(videoId, start, toggleEmbedBtn);
-                    };
-
-                    controlsContainer.appendChild(playBtn);
-                    controlsContainer.appendChild(copyBtn);
-                    controlsContainer.appendChild(scoreDisplay);
-
-                    entryContainer.appendChild(controlsContainer);
-                    scoreContainer.appendChild(entryContainer);
-                    
-                    toggleEmbedBtn.textContent = "Hide Video";
-                });
-            } else {
-                if (contentContainer.parentNode == null) {
-                    videoContainer.appendChild(contentContainer);
-                    toggleEmbedBtn.textContent = "Hide Video";
-                } else {
-                    contentContainer.remove();
-                    toggleEmbedBtn.textContent = "Show Video";
-                }
-            }
+            embeddedVideoCurrentlyShowing = toggleVideoDisplay(embeddedVideoExists, videoId, toggleEmbedBtn, videoContainer, contentContainer);
+            embeddedVideoExists = embeddedVideoExists || embeddedVideoCurrentlyShowing;
         };
 
-        resultsDiv.appendChild(videoContainer);
+        resultsDiv.appendChild(resultContainer);
     });
 }
 
@@ -208,16 +201,42 @@ function toggleChannelSelection(event) {
     event.currentTarget.classList.toggle('selected');
 }
 
-function playVideoAtTime(videoId, start, toggleEmbedBtn) {
+function toggleVideoDisplay(embeddedVideoExists, videoId, toggleEmbedBtn, videoContainer, contentContainer, forceShow = false){
+    let currentlyShowing = (videoContainer.parentNode == null) ? false : true;
+    let targetShowing = forceShow ? true : (!currentlyShowing);
+
+    if (currentlyShowing !== targetShowing){
+        if (targetShowing) {
+            contentContainer.prepend(videoContainer);
+            toggleEmbedBtn.textContent = "Hide Video";
+        } else {
+            videoContainer.remove();
+            toggleEmbedBtn.textContent = "Show Video";
+        }
+    }
+
+    if (embeddedVideoExists === false) {
+        iframe = document.createElement("div");
+        iframe.id = `player-${videoId}`;
+        videoContainer.appendChild(iframe);
+
+        players[videoId] = new YT.Player(`player-${videoId}`, {
+            height: '315',
+            width: '560',
+            videoId: videoId,
+            events: {
+                'onReady': onPlayerReady
+            }
+        });
+    }
+
+    return targetShowing;
+}
+
+function playVideoAtTime(videoId, start) {
     if (players[videoId]) {
         players[videoId].seekTo(start);
         players[videoId].playVideo();
-    } else {
-        toggleEmbedBtn.click();
-        setTimeout(() => {
-            players[videoId].seekTo(start);
-            players[videoId].playVideo();
-        }, 1000);
     }
 }
 
