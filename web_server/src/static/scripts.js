@@ -102,17 +102,28 @@ function createVideoGroupPill(videoId, segmentGroup) {
     return resultContainer;
 }
 
-async function search(q_type) {
+function getSearchType() {
+    const toggleElements = document.getElementsByName('search-type');
+    for (let i = 0; i < toggleElements.length; i++) {
+        if (toggleElements[i].checked) return toggleElements[i].value;
+    }
+    return 'err';
+}
+
+async function search() {
     clearResults();
     document.getElementById('loading-spinner').style.display = 'block';
     document.getElementById('error-message').style.display = 'none';
 
-    // Get query from the called search bar
-    let query = "";
-    if (q_type == 'sym') {
-        query = document.getElementById('search-query-sym').value;
-    } else if (q_type == 'asym') {
-        query = document.getElementById('search-query-asym').value;
+    // Get query from the search bar
+    let query = document.getElementById('search-field').value;
+
+    // Get type of search
+    let q_type = getSearchType();
+    if (q_type == 'err') {
+        document.getElementById('loading-spinner').style.display = 'none';
+        document.getElementById('error-message').style.display = 'block';
+        return;
     }
 
     // Get channels selected from the sidebar
@@ -166,24 +177,17 @@ function clearResults() {
     resultsDiv.innerHTML = ''; // Clear previous results
 }
 
-function handleKeyPressSym(event) {
-    if (event.keyCode === 13 || event.which === 13) {
-        search('sym');
-    }
+function handleSeachEnter(event) {
+    if (event.keyCode === 13 || event.which === 13) search();
 }
 
-function handleKeyPressAsym(event) {
-    if (event.keyCode === 13 || event.which === 13) {
-        search('asym');
-    }
-}
 
-function copySearchURL(qType) {
+function copySearchURL() {
     const baseUrl = window.location.origin + window.location.pathname;
     const url = new URL(baseUrl);
-    const searchCopyBtn = document.getElementById(`search-copy-btn-${qType}`);
+    const searchCopyBtn = document.getElementById(`search-copy-btn`);
 
-    const query = document.getElementById(`search-query-${qType}`).value;
+    const query = document.getElementById(`search-field`).value;
     url.searchParams.set('search', query);
 
     const channels = document.getElementsByClassName('channel-container');
@@ -196,9 +200,8 @@ function copySearchURL(qType) {
     if (selected_channels.length > 0) {
         url.searchParams.set('channels', selected_channels.join('+'));
     }
-    if (qType == 'asym') {
-        url.searchParams.set('asym', 'true');
-    }
+    const q_type = getSearchType();
+    if (q_type === 'asym') url.searchParams.set('asym', 'true');
 
     navigator.clipboard.writeText(url).then(() => {
         let notification = document.createElement("div");
@@ -265,8 +268,7 @@ function getSlugFromURL() {
 }
 
 window.onload = function () {
-    document.getElementById('search-query-sym').addEventListener('keypress', handleKeyPressSym);
-    document.getElementById('search-query-asym').addEventListener('keypress', handleKeyPressAsym);
+    document.getElementById('search-field').addEventListener('keypress', handleSeachEnter);
 
     const channels = document.getElementsByClassName('channel-container');
     for (let i = 0; i < channels.length; i++) {
@@ -275,22 +277,15 @@ window.onload = function () {
 
     const slug = getSlugFromURL();
     const [asym, query, channelsString] = slug;
-    if (!query) {
-        return;
-    }
+    if (!query) return;
+
+    if (asym) document.getElementById('asym-search').checked = true;
 
     const re = /[,\+\ ]|%20/;
     channelsString.split(re).forEach(channel => {
         const element = document.getElementById(channel);
-        if (element) {
-            element.classList.add('selected');
-        }
+        if (element) element.classList.add('selected');
     });
-    if (!asym) {
-        document.getElementById('search-query-sym').value = query;
-        search('sym');
-    } else {
-        document.getElementById('search-query-asym').value = query;
-        search('asym');
-    }
+    document.getElementById('search-field').value = query;
+    search();
 };

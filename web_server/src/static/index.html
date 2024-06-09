@@ -46,21 +46,22 @@
     <div class="main-content">
         <div class="search-bar-container">
             <div class="search-bar-section">
-                <h2>Search Similar Phrase or Concept</h2>
-                <input type="text" id="search-query-sym" placeholder="Enter phrase" class="search-bar">
-                <div class="search-bar-buttons">
-                    <button onclick="search('sym')">Search</button>
-                    <button onclick="copySearchURL('sym')" id="search-copy-btn-sym">
-                        Copy Search Link
-                    </button>
+                <h1>Semantic search</h1>
+                <div class="search-type-toggle">
+                    <!-- Toggle for sym/asym search -->
+                    <div>
+                        <input type="radio" id="sym-search" name="search-type" value="sym" checked>
+                        <label for="sym-search">Search for phrase</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="asym-search" name="search-type" value="asym">
+                        <label for="asym-search">Search with question</label>
+                    </div>
                 </div>
-            </div>
-            <div class="search-bar-section">
-                <h2>Search Answer to Question</h2>
-                <input type="text" id="search-query-asym" placeholder="Enter question" class="search-bar">
+                <input type="text" id="search-field" placeholder="Enter phrase" class="search-bar">
                 <div class="search-bar-buttons">
-                    <button onclick="search('asym')">Search</button>
-                    <button onclick="copySearchURL('asym')" id="search-copy-btn-asym">
+                    <button onclick="search()">Search</button>
+                    <button onclick="copySearchURL()" id="search-copy-btn">
                         Copy Search Link
                     </button>
                 </div>
