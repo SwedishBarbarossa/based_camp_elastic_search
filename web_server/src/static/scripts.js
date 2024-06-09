@@ -27,17 +27,10 @@ async function search(q_type) {
         "james_lindsay",
         "jordan_b_peterson"
     ];
-    let selected_channels = [];
-    for (let i = 0; i < channels.length; i++) {
-        if (document.getElementById(channels[i]).classList.contains('selected')) {
-            selected_channels.push(channels[i]);
-        }
-    }
-    if (selected_channels.length == 0) {
-        selected_channels = channels;
-    }
-    const channels_string = selected_channels.join(",");
+    let selected_channels = channels.filter(channel => document.getElementById(channel).classList.contains('selected'));
+    if (selected_channels.length === 0) selected_channels = channels;
 
+    const channels_string = selected_channels.join(",");
     let response = await fetch(`/search/?query=${query}&channels=${channels_string}&q_type=${q_type}`);
     let data = await response.json();
 
@@ -45,7 +38,6 @@ async function search(q_type) {
     let resultsDiv = document.getElementById('results');
     resultsDiv.innerHTML = ''; // Clear previous results
 
-    // Process results to sort by score and group by videoId
     let segments = Object.keys(data.results).map(idx => {
         const segment = data.results[idx];
         const [videoId, start, end, score] = segment;
@@ -90,8 +82,8 @@ async function search(q_type) {
 
         let embeddedVideoExists = false;
         let embeddedVideoCurrentlyShowing = false;
-        let scoreContainer;
-        scoreContainer = document.createElement("div");
+
+        let scoreContainer = document.createElement("div");
         scoreContainer.className = "score-container";
 
         groupedSegments[videoId]['segments'].sort((a, b) => b.score - a.score).forEach(({ start, end, score }) => {
@@ -108,7 +100,6 @@ async function search(q_type) {
 
             let copyBtn = document.createElement("button");
             copyBtn.textContent = "Copy Link";
-            copyBtn.style.position = "relative";
             copyBtn.onclick = function () {
                 navigator.clipboard.writeText(videoLink).then(() => {
                     let notification = document.createElement("div");
@@ -121,12 +112,10 @@ async function search(q_type) {
 
             let playBtn = document.createElement("button");
             playBtn.textContent = "Play Timestamp";
-            playBtn.style.position = "relative";
             playBtn.onclick = function () {
-                useTimeout = !embeddedVideoCurrentlyShowing;
+                let useTimeout = !embeddedVideoCurrentlyShowing;
 
-                embeddedVideoCurrentlyShowing = toggleVideoDisplay(embeddedVideoExists, videoId, toggleEmbedBtn, videoContainer, contentContainer, true
-                );
+                embeddedVideoCurrentlyShowing = toggleVideoDisplay(embeddedVideoExists, videoId, toggleEmbedBtn, videoContainer, contentContainer, true);
                 embeddedVideoExists = embeddedVideoExists || embeddedVideoCurrentlyShowing;
 
                 setTimeout(() => {
@@ -202,7 +191,7 @@ function toggleChannelSelection(event) {
 }
 
 function toggleVideoDisplay(embeddedVideoExists, videoId, toggleEmbedBtn, videoContainer, contentContainer, forceShow = false) {
-    let currentlyShowing = (videoContainer.parentNode == null) ? false : true;
+    let currentlyShowing = (videoContainer.parentNode !== null);
     let targetShowing = forceShow ? true : (!currentlyShowing);
 
     if (currentlyShowing !== targetShowing) {
@@ -215,8 +204,8 @@ function toggleVideoDisplay(embeddedVideoExists, videoId, toggleEmbedBtn, videoC
         }
     }
 
-    if (embeddedVideoExists === false) {
-        iframe = document.createElement("div");
+    if (!embeddedVideoExists) {
+        let iframe = document.createElement("div");
         iframe.id = `player-${videoId}`;
         videoContainer.appendChild(iframe);
 
@@ -246,7 +235,7 @@ function onPlayerReady(event) {
 
 function getSlugFromURL() {
     const urlParams = new URLSearchParams(window.location.search);
-    let asym = urlParams.has('asym')
+    const asym = urlParams.has('asym');
     const query = urlParams.get('search');
     const channels = urlParams.get('channels');
     return [asym, query ? decodeURIComponent(query) : '', channels ? channels : ''];
@@ -267,7 +256,7 @@ window.onload = function () {
         return;
     }
 
-    const re = /[,\+\ ]|%20/
+    const re = /[,\+\ ]|%20/;
     channelsString.split(re).forEach(channel => {
         const element = document.getElementById(channel);
         if (element) {
@@ -277,8 +266,7 @@ window.onload = function () {
     if (!asym) {
         document.getElementById('search-query-sym').value = query;
         search('sym');
-    }
-    else {
+    } else {
         document.getElementById('search-query-asym').value = query;
         search('asym');
     }
