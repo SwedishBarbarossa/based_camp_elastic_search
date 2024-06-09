@@ -1,11 +1,111 @@
 let players = {};
 
+const channels = [
+    "based_camp",
+    "balaji_srinivasan",
+    "hormozis",
+    "y_combinator",
+    "charter_cities_institute",
+    "startup_societies_foundation",
+    "free_cities_foundation",
+    "james_lindsay",
+    "jordan_b_peterson"
+];
+
 function onYouTubeIframeAPIReady() {
     // This function will be called by the YouTube IFrame API when it's ready
 }
 
+function createVideoGroupPill(videoId, segmentGroup) {
+    const resultContainer = document.createElement("div");
+    resultContainer.className = "result-container";
+
+    const headerContainer = document.createElement("div");
+    headerContainer.className = "header-container";
+    resultContainer.appendChild(headerContainer);
+
+    const toggleEmbedBtn = document.createElement("button");
+    toggleEmbedBtn.textContent = "Show Video";
+    headerContainer.appendChild(toggleEmbedBtn);
+
+    let topScore = segmentGroup.topScore;
+    const segmentTitle = document.createElement("h3");
+    segmentTitle.textContent = `Top Score: ${topScore.toFixed(3)}`;
+    headerContainer.appendChild(segmentTitle);
+
+    const contentContainer = document.createElement("div");
+    contentContainer.className = "content-container";
+    resultContainer.appendChild(contentContainer);
+
+    const videoContainer = document.createElement("div");
+    videoContainer.className = "video-container";
+
+    let embeddedVideoExists = false;
+    let embeddedVideoCurrentlyShowing = false;
+
+    let scoreContainer = document.createElement("div");
+    scoreContainer.className = "score-container";
+
+    segmentGroup['segments'].sort((a, b) => b.score - a.score).forEach(({ start, end, score }) => {
+        const videoLink = `https://www.youtube.com/watch?v=${videoId}&t=${start}s`;
+
+        let entryContainer = document.createElement("div");
+        entryContainer.className = "entry-container";
+
+        let controlsContainer = document.createElement("div");
+        controlsContainer.className = "controls-container";
+
+        let scoreDisplay = document.createElement("div");
+        scoreDisplay.textContent = `Score: ${score.toFixed(3)}`;
+
+        let copyBtn = document.createElement("button");
+        copyBtn.textContent = "Copy Link";
+        copyBtn.onclick = function () {
+            navigator.clipboard.writeText(videoLink).then(() => {
+                let notification = document.createElement("div");
+                notification.textContent = "Copied!";
+                notification.className = "notification";
+                copyBtn.appendChild(notification);
+                setTimeout(() => notification.remove(), 1000);
+            });
+        };
+
+        let playBtn = document.createElement("button");
+        playBtn.textContent = "Play Timestamp";
+        playBtn.onclick = function () {
+            let useTimeout = !embeddedVideoCurrentlyShowing;
+
+            embeddedVideoCurrentlyShowing = toggleVideoDisplay(embeddedVideoExists, videoId, toggleEmbedBtn, videoContainer, contentContainer, true);
+            embeddedVideoExists = embeddedVideoExists || embeddedVideoCurrentlyShowing;
+
+            setTimeout(() => {
+                players[videoId].seekTo(start);
+                players[videoId].playVideo();
+            }, (useTimeout ? 500 : 0));
+        };
+
+        controlsContainer.appendChild(playBtn);
+        controlsContainer.appendChild(copyBtn);
+        controlsContainer.appendChild(scoreDisplay);
+
+        entryContainer.appendChild(controlsContainer);
+        scoreContainer.appendChild(entryContainer);
+    });
+
+    contentContainer.appendChild(scoreContainer);
+
+    toggleEmbedBtn.onclick = function () {
+        embeddedVideoCurrentlyShowing = toggleVideoDisplay(embeddedVideoExists, videoId, toggleEmbedBtn, videoContainer, contentContainer);
+        embeddedVideoExists = embeddedVideoExists || embeddedVideoCurrentlyShowing;
+    };
+
+    return resultContainer;
+}
+
 async function search(q_type) {
+    clearResults();
     document.getElementById('loading-spinner').style.display = 'block';
+    document.getElementById('error-message').style.display = 'none';
 
     // Get query from the called search bar
     let query = "";
@@ -16,131 +116,54 @@ async function search(q_type) {
     }
 
     // Get channels selected from the sidebar
-    const channels = [
-        "based_camp",
-        "balaji_srinivasan",
-        "hormozis",
-        "y_combinator",
-        "charter_cities_institute",
-        "startup_societies_foundation",
-        "free_cities_foundation",
-        "james_lindsay",
-        "jordan_b_peterson"
-    ];
     let selected_channels = channels.filter(channel => document.getElementById(channel).classList.contains('selected'));
     if (selected_channels.length === 0) selected_channels = channels;
 
+    // Hit API
     const channels_string = selected_channels.join(",");
     let response = await fetch(`/search/?query=${query}&channels=${channels_string}&q_type=${q_type}`);
+
+    // If response is not ok, show 
+    if (!response.ok) {
+        document.getElementById('loading-spinner').style.display = 'none';
+        document.getElementById('error-message').style.display = 'block';
+        return;
+    }
+
     let data = await response.json();
 
-    document.getElementById('loading-spinner').style.display = 'none';
-    let resultsDiv = document.getElementById('results');
-    resultsDiv.innerHTML = ''; // Clear previous results
-
+    // Parse results
     let segments = Object.keys(data.results).map(idx => {
         const segment = data.results[idx];
         const [videoId, start, end, score] = segment;
         return { videoId, start, end, score };
     });
-
+    
+    // Group segments by video id
     let groupedSegments = segments.reduce((acc, segment) => {
         if (!acc[segment.videoId]) {
             acc[segment.videoId] = { 'topScore': segment.score, 'segments': [] };
         } else {
             acc[segment.videoId].topScore = Math.max(segment.score, acc[segment.videoId].topScore);
         }
-
+        
         acc[segment.videoId]['segments'].push(segment);
         return acc;
     }, {});
-
+    
+    // Hide spinner
+    document.getElementById('loading-spinner').style.display = 'none';
+    
     // Create and append video containers
+    let resultsDiv = document.getElementById('results');
     Object.keys(groupedSegments).forEach(videoId => {
-        const resultContainer = document.createElement("div");
-        resultContainer.className = "result-container";
-
-        const headerContainer = document.createElement("div");
-        headerContainer.className = "header-container";
-        resultContainer.appendChild(headerContainer);
-
-        const toggleEmbedBtn = document.createElement("button");
-        toggleEmbedBtn.textContent = "Show Video";
-        headerContainer.appendChild(toggleEmbedBtn);
-
-        let topScore = groupedSegments[videoId].topScore;
-        const segmentTitle = document.createElement("h3");
-        segmentTitle.textContent = `Top Score: ${topScore.toFixed(3)}`;
-        headerContainer.appendChild(segmentTitle);
-
-        const contentContainer = document.createElement("div");
-        contentContainer.className = "content-container";
-        resultContainer.appendChild(contentContainer);
-
-        const videoContainer = document.createElement("div");
-        videoContainer.className = "video-container";
-
-        let embeddedVideoExists = false;
-        let embeddedVideoCurrentlyShowing = false;
-
-        let scoreContainer = document.createElement("div");
-        scoreContainer.className = "score-container";
-
-        groupedSegments[videoId]['segments'].sort((a, b) => b.score - a.score).forEach(({ start, end, score }) => {
-            const videoLink = `https://www.youtube.com/watch?v=${videoId}&t=${start}s`;
-
-            let entryContainer = document.createElement("div");
-            entryContainer.className = "entry-container";
-
-            let controlsContainer = document.createElement("div");
-            controlsContainer.className = "controls-container";
-
-            let scoreDisplay = document.createElement("div");
-            scoreDisplay.textContent = `Score: ${score.toFixed(3)}`;
-
-            let copyBtn = document.createElement("button");
-            copyBtn.textContent = "Copy Link";
-            copyBtn.onclick = function () {
-                navigator.clipboard.writeText(videoLink).then(() => {
-                    let notification = document.createElement("div");
-                    notification.textContent = "Copied!";
-                    notification.className = "notification";
-                    copyBtn.appendChild(notification);
-                    setTimeout(() => notification.remove(), 1000);
-                });
-            };
-
-            let playBtn = document.createElement("button");
-            playBtn.textContent = "Play Timestamp";
-            playBtn.onclick = function () {
-                let useTimeout = !embeddedVideoCurrentlyShowing;
-
-                embeddedVideoCurrentlyShowing = toggleVideoDisplay(embeddedVideoExists, videoId, toggleEmbedBtn, videoContainer, contentContainer, true);
-                embeddedVideoExists = embeddedVideoExists || embeddedVideoCurrentlyShowing;
-
-                setTimeout(() => {
-                    players[videoId].seekTo(start);
-                    players[videoId].playVideo();
-                }, (useTimeout ? 500 : 0));
-            };
-
-            controlsContainer.appendChild(playBtn);
-            controlsContainer.appendChild(copyBtn);
-            controlsContainer.appendChild(scoreDisplay);
-
-            entryContainer.appendChild(controlsContainer);
-            scoreContainer.appendChild(entryContainer);
-        });
-
-        contentContainer.appendChild(scoreContainer);
-
-        toggleEmbedBtn.onclick = function () {
-            embeddedVideoCurrentlyShowing = toggleVideoDisplay(embeddedVideoExists, videoId, toggleEmbedBtn, videoContainer, contentContainer);
-            embeddedVideoExists = embeddedVideoExists || embeddedVideoCurrentlyShowing;
-        };
-
-        resultsDiv.appendChild(resultContainer);
+        resultsDiv.appendChild(createVideoGroupPill(videoId, groupedSegments[videoId]));
     });
+}
+
+function clearResults() {
+    let resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = ''; // Clear previous results
 }
 
 function handleKeyPressSym(event) {

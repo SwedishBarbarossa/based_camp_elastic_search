@@ -44,7 +44,6 @@
         </div>
     </div>
     <div class="main-content">
-        <div id="loading-spinner" style="display: none;">Loading...</div>
         <div class="search-bar-container">
             <div class="search-bar-section">
                 <h2>Search Similar Phrase or Concept</h2>
@@ -66,6 +65,12 @@
                     </button>
                 </div>
             </div>
+        </div>
+        <div id="loading-spinner" style="display: none;">
+            <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
+        </div>
+        <div id="error-message" style="display: none;">
+            An error has occurred. Please try again later.
         </div>
         <div class="results-content">
             <div id="results" class="results-container">
