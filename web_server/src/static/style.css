@@ -254,6 +254,7 @@ button:hover {
     .sidebar-placeholder {
         max-width: 100%;
         width: 100%;
+        padding: 0;
     }
 
     .sidebar {
@@ -287,6 +288,7 @@ button:hover {
         left: 0;
         margin-top: 10px;
         box-shadow: none;
+        text-align: center;
     }
 
     .search-bar-section {
@@ -296,7 +298,7 @@ button:hover {
     }
 
     .search-bar {
-        width: calc(100% - 20px);
+        width: calc(100% - 30px);
     }
 
     .results-container {
@@ -306,10 +308,17 @@ button:hover {
     .result-container {
         width: 100%;
         padding: 0px;
+        align-items: center;
+        border: 0px;
+        border-top: 1px solid #424242;
+        border-bottom: 1px solid #424242;
+        border-radius: 0px;
     }
 
     .content-container {
+        max-width: 178vh; /* max 16:9 ratio based on viewport height */
         flex-direction: column;
+        align-items: center;
     }
 
     .score-container {
@@ -319,13 +328,10 @@ button:hover {
     /* Responsive video container */
     .video-container {
         overflow: hidden;
-        max-width: 100%;
-        max-height: 100%;
         position: relative;
         display: block;
         width: 100%; /* width of iframe wrapper */
         height: 0;
-        margin: auto;
         padding: 0% 0% 56.25%; /* 16:9 ratio */
         overflow: hidden;
     }
