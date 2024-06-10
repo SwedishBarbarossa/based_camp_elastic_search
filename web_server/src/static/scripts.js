@@ -295,8 +295,41 @@ function getSlugFromURL() {
     return [asym, query ? decodeURIComponent(query) : '', slug_channels ? slug_channels : ''];
 }
 
+async function addDonationButton() {
+    // get donation URL
+    const res = await fetch('/donate_url/');
+    if (res.ok) {
+        const res_text = await res.json();
+        const url = res_text.donate_url;
+        const message = res_text.message;
+        
+        // make container
+        const container = document.createElement('div');
+        container.id = 'donation-container';
+        container.className = 'donation-container';
+        
+        // add text
+        const text = document.createElement('div');
+        text.textContent = message;
+        text.className = 'donation-text';
+        container.appendChild(text);
+
+        // add button element
+        const button = document.createElement('button');
+        button.id = 'donate-button';
+        button.textContent = 'Donate';
+        button.className = 'donation-button';
+        button.onclick = () => window.open(url, '_blank');
+        container.appendChild(button);
+
+        const sidebar = document.getElementById('right-sidebar');
+        sidebar.appendChild(container);
+    }
+}
+
 window.onload = function () {
     buildChannelList();
+    addDonationButton();
     document.getElementById('search-field').addEventListener('keypress', handleSeachEnter);
     
     /* prevent hover on touch */

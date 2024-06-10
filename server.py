@@ -7,7 +7,7 @@ from typing import Literal
 import numpy as np
 import numpy.typing as npt
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from qdrant_client import QdrantClient
 from sentence_transformers import SentenceTransformer
 
@@ -31,6 +31,9 @@ SYM_DIM = 384
 ASYM_DIM = 384
 REBUILD_COOLDOWN = timedelta(seconds=10)
 REBUILD_SLEEP = 60 * 5
+SHOW_STRIPE = os.getenv("SHOW_STRIPE") != "0" and os.getenv("SHOW_STRIPE") != None
+STRIPE_URL = os.getenv("STRIPE_URL")
+DONATION_HOOK_MESSAGE = os.getenv("DONATION_HOOK_MESSAGE")
 
 EXISTING_CHANNELS = [
     "based_camp",
@@ -91,6 +94,19 @@ def update_qdrant():
                 last_grpc_call_time = None
 
         time.sleep(wait_seconds)
+
+
+if SHOW_STRIPE:
+
+    @fapi_app.get("/donate_url/")
+    async def donate_url():
+        return {"donate_url": STRIPE_URL, "message": DONATION_HOOK_MESSAGE}
+
+else:
+
+    @fapi_app.get("/donate_url/")
+    async def donate_url_not_implemented():
+        return Response(status_code=501)
 
 
 @fapi_app.get("/search/")

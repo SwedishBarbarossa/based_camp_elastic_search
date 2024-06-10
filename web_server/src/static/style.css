@@ -79,42 +79,49 @@ body {
 
 .lds-ring,
 .lds-ring div {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
+
 .lds-ring {
-  display: inline-block;
-  position: relative;
-  width: 80px;
-  height: 80px;
+    display: inline-block;
+    position: relative;
+    width: 80px;
+    height: 80px;
 }
+
 .lds-ring div {
-  box-sizing: border-box;
-  display: block;
-  position: absolute;
-  width: 64px;
-  height: 64px;
-  margin: 8px;
-  border: 8px solid currentColor;
-  border-radius: 50%;
-  animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-  border-color: currentColor transparent transparent transparent;
+    box-sizing: border-box;
+    display: block;
+    position: absolute;
+    width: 64px;
+    height: 64px;
+    margin: 8px;
+    border: 8px solid currentColor;
+    border-radius: 50%;
+    animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    border-color: currentColor transparent transparent transparent;
 }
+
 .lds-ring div:nth-child(1) {
-  animation-delay: -0.45s;
+    animation-delay: -0.45s;
 }
+
 .lds-ring div:nth-child(2) {
-  animation-delay: -0.3s;
+    animation-delay: -0.3s;
 }
+
 .lds-ring div:nth-child(3) {
-  animation-delay: -0.15s;
+    animation-delay: -0.15s;
 }
+
 @keyframes lds-ring {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* End of Spinner */
@@ -146,17 +153,17 @@ body {
 
 .channel-container {
     background-color: transparent;
-    border-color: #5d5d5d; /* Unselected Border */
+    border-color: #5d5d5d;
 }
 
 .channel-container.selected {
-    background-color: #5d5d5d; /* Selected Fill */
+    background-color: #5d5d5d;
     border-color: #5d5d5d;
 }
 
 .channel-container:hover,
 .channel-container.selected:hover {
-    background-color: #8f8f8f; /* Hovered */
+    background-color: #8f8f8f;
     border-color: #8f8f8f;
 }
 
@@ -169,27 +176,27 @@ body {
 
 /* Charter Cities/Statecraft */
 .channel-type.misc {
-    background-color: #8f8f8f; /* Unselected Border */
+    background-color: #8f8f8f;
 }
 
 /* Business/Startups */
 .channel-type.business {
-    background-color: #E65100; /* Unselected Border */
+    background-color: #E65100;
 }
 
 /* Ideology/Politics */
 .channel-type.ideology {
-    background-color: royalblue; /* Unselected Border */
+    background-color: royalblue;
 }
 
 /* Charter Cities/Statecraft */
 .channel-type.charter_cities {
-    background-color: limegreen; /* Unselected Border */
+    background-color: limegreen;
 }
 
 /* Science/Math */
 .channel-type.science {
-    background-color: yellow; /* Unselected Border */
+    background-color: yellow;
 }
 
 .channel-container label {
@@ -199,6 +206,54 @@ body {
     text-align: center;
     pointer-events: none;
 }
+
+/* Donation stuff */
+.donation-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding-top: 20px;
+}
+
+.donation-text {
+    font-size: 20px;
+    color: #ffffff;
+    text-align: center;
+}
+
+.donation-button {
+    background-color: #d32f2f;
+    color: #ffffff;
+    border: none;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.donation-button:hover {
+    background-color: #b71c1c;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.donation-button:active {
+    background-color: #9a0007;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transform: translateY(2px);
+}
+
+.donation-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.5);
+}
+
+/* End of Donation stuff */
 
 .search-bar-section {
     display: flex;
@@ -344,7 +399,13 @@ button:hover {
 
 /* Media Queries for Mobile */
 @media (max-width: 1030px) {
-    body, .sidebar, .main-content, .search-bar-container, .search-bar-section, .results-container {
+
+    body,
+    .sidebar,
+    .main-content,
+    .search-bar-container,
+    .search-bar-section,
+    .results-container {
         padding: 0;
         flex-direction: column;
     }
@@ -352,7 +413,13 @@ button:hover {
     .sidebar-placeholder {
         max-width: 100%;
         width: 100%;
-        padding: 0;
+        padding-inline: 0;
+        padding-block: 20px;
+        order: 2;
+    }
+
+    .donation-container {
+        padding-inline: 10px;
     }
 
     .sidebar {
@@ -362,10 +429,6 @@ button:hover {
         flex-direction: column;
         align-items: center;
         box-shadow: none;
-    }
-
-    .sidebar-placeholder {
-        order: 2;
     }
 
     .channels-container {
@@ -408,7 +471,7 @@ button:hover {
     }
 
     .content-container {
-        max-width: 178vh; /* max 16:9 ratio based on viewport height */
+        max-width: 178vh;
         flex-direction: column;
         align-items: center;
     }
@@ -422,14 +485,17 @@ button:hover {
         overflow: hidden;
         position: relative;
         display: block;
-        width: 100%; /* width of iframe wrapper */
+        width: 100%;
         height: 0;
-        padding: 0% 0% 56.25%; /* 16:9 ratio */
+        padding: 0% 0% 56.25%;
         overflow: hidden;
     }
+
     .video-container iframe {
         position: absolute;
-        top: 0; bottom: 0; left: 0;
+        top: 0;
+        bottom: 0;
+        left: 0;
         width: 100%;
         height: 100%;
         border: 0;
