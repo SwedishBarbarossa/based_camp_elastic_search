@@ -1,7 +1,8 @@
 import os
 import re
 import subprocess
-from typing import TypedDict
+import time
+from typing import Callable, TypedDict
 
 import numpy as np
 import pytube
@@ -12,6 +13,7 @@ import whisperx
 import yaml
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
+from whisperx.alignment import AlignedTranscriptionResult
 
 from services.upload_comparison import calculate_checksum
 
@@ -112,7 +114,12 @@ def rip_audio_files(
     if not vids:
         return
 
+    START_TIME = time.time()
     for video in tqdm(vids):
+        # stop if it's been > 1 hour
+        if time.time() > START_TIME + 1 * 60 * 60:
+            break
+
         # save video audio
         video_id = video.video_id
         try:
@@ -169,19 +176,11 @@ def _get_media_duration(file_path):
         return "NN:NN:NN"
 
 
-def transcribe_audio_files(audio_dir: str, transcripts_dir: str):
-    # Load the Whisper model
-    # You can choose another model size as needed
-    has_cuda = torch.cuda.is_available()
-    device = "cuda" if has_cuda else "cpu"
-    model = whisperx.load_model(
-        "large-v3",
-        device=device,
-        compute_type="float16",
-        language="en",
-    )
-    model_a, metadata = whisperx.load_align_model(language_code="en", device=device)
-
+def transcribe_audio_files(
+    audio_dir: str,
+    transcripts_dir: str,
+    get_segments: Callable[[str], AlignedTranscriptionResult],
+):
     # create a list of audio files that already exist and is > 1 mb
     audio_files: set[str] = {
         file.removesuffix(".mp3")
@@ -207,8 +206,6 @@ def transcribe_audio_files(audio_dir: str, transcripts_dir: str):
     # Process each MP3 files in the directory
     p_bar = tqdm(files_to_transcribe)
     for filename in p_bar:
-        duration = _get_media_duration(os.path.join(audio_dir, filename + ".mp3"))
-        p_bar.set_description(f"{filename} [{duration}]")
         file_path = os.path.join(audio_dir, filename + ".mp3")
         output_path = os.path.join(transcripts_dir, filename + ".txt")
 
@@ -224,16 +221,9 @@ def transcribe_audio_files(audio_dir: str, transcripts_dir: str):
             os.remove(file_path)
             continue
 
-        audio = whisperx.load_audio(file_path)
-        result = model.transcribe(audio, batch_size=16, language="en")
-        result = whisperx.align(
-            result["segments"],
-            model_a,
-            metadata,
-            audio,
-            device,
-            return_char_alignments=False,
-        )
+        duration = _get_media_duration(os.path.join(audio_dir, filename + ".mp3"))
+        p_bar.set_description(f"{filename} [{duration}]")
+        result = get_segments(file_path)
         with open(output_path, "w", encoding="utf-8") as output_file:
             for segment in result["segments"]:
                 text = segment["text"].strip()
@@ -246,8 +236,6 @@ def transcribe_audio_files(audio_dir: str, transcripts_dir: str):
 
         # delete the audio file
         os.remove(file_path)
-
-    print("Transcriptions completed.")
 
 
 def _split_long_segments(
@@ -349,21 +337,20 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str, channel: str):
 
     # Encode the segments and save the .npy file
     os.makedirs(embeddings_dir, exist_ok=True)
+    existing_embeddings = set(os.listdir(embeddings_dir))
     for segment_name, text in tqdm(segments):
         # Symmetric encoding
-        sym_seg_path = os.path.join(
-            embeddings_dir, "sym " + f"{channel} " + segment_name + ".npy"
-        )
-        if not os.path.exists(sym_seg_path):
+        sym_seg_name = f"sym {channel} {segment_name}.npy"
+        if sym_seg_name not in existing_embeddings:
             embeddings = SYMMETRIC_MODEL.encode(text)
+            sym_seg_path = os.path.join(embeddings_dir, sym_seg_name)
             np.save(sym_seg_path, embeddings)
 
         # Asymmetric encoding
-        asym_seg_path = os.path.join(
-            embeddings_dir, "asym " + f"{channel} " + segment_name + ".npy"
-        )
-        if not os.path.exists(asym_seg_path):
+        asym_seg_name = f"asym {channel} {segment_name}.npy"
+        if asym_seg_name not in existing_embeddings:
             embeddings = ASYMMETRIC_MODEL.encode(text)
+            asym_seg_path = os.path.join(embeddings_dir, asym_seg_name)
             np.save(asym_seg_path, embeddings)
 
 
@@ -404,6 +391,31 @@ def main(added_record: str, rip=False) -> list[str]:
     )
     age_restricted_path = os.path.join(audio_dir, "age_restricted.txt")
 
+    # Load the Whisper model
+    # You can choose another model size as needed
+    has_cuda = torch.cuda.is_available()
+    device = "cuda" if has_cuda else "cpu"
+    model = whisperx.load_model(
+        "large-v3",
+        device=device,
+        compute_type="float16",
+        language="en",
+    )
+    model_a, metadata = whisperx.load_align_model(language_code="en", device=device)
+
+    def transcribe_audio_file(audio_file_path: str) -> AlignedTranscriptionResult:
+        """Transcription hook"""
+        audio = whisperx.load_audio(audio_file_path)
+        result = model.transcribe(audio, batch_size=16, language="en")
+        return whisperx.align(
+            result["segments"],
+            model_a,
+            metadata,
+            audio,
+            device,
+            return_char_alignments=False,
+        )
+
     # load config
     config = load_config(config_path)
     for i, (creator, creator_conf) in enumerate(config.items()):
@@ -412,7 +424,7 @@ def main(added_record: str, rip=False) -> list[str]:
         creator_audio_dir = os.path.join(audio_dir, creator)
         creator_transcripts_dir = os.path.join(transcripts_dir, creator)
         if rip:
-            print(f"Ripping {creator} audio files...")
+            print(f"({i + 1}/{len(config.keys())}) Ripping {creator} audio files...")
             rip_audio_files(
                 creator_audio_dir,
                 creator_transcripts_dir,
@@ -420,13 +432,13 @@ def main(added_record: str, rip=False) -> list[str]:
                 creator_conf,
             )
             print(f"Transcribing {creator} audio files...")
-            transcribe_audio_files(creator_audio_dir, creator_transcripts_dir)
+            transcribe_audio_files(
+                creator_audio_dir,
+                creator_transcripts_dir,
+                transcribe_audio_file,
+            )
         print(f"Encoding {creator} transcripts...")
         encode_transcripts(creator_transcripts_dir, embeddings_dir, creator)
 
     # return the previously uploaded files on the server
     return get_uploaded_files(added_record)
-
-
-if __name__ == "__main__":
-    main()
