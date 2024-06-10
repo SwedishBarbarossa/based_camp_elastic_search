@@ -18,13 +18,12 @@ function buildChannelList() {
     for (let i = 0; i < channels.length; i++) {
         const channel = sortedChannels[i];
         const channelElement = document.createElement("div");
-        /* <div class="channel-container" id="based_camp">
-                <label for="based_camp">Based Camp</label>
-            </div> */
-        let baseClassName = `channel-container ${channel[2]}`;
+        let baseClassName = "channel-container";
         channelElement.className = baseClassName;
-
         channelElement.id = channel[0];
+        const channelType = document.createElement("span");
+        channelType.className = `channel-type ${channel[2]}`;
+        channelElement.appendChild(channelType);
         const channelLabel = document.createElement("label");
         channelLabel.htmlFor = channel[0];
         channelLabel.textContent = channel[1];

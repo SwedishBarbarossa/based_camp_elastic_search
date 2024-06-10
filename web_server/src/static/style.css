@@ -10,11 +10,11 @@ body {
 }
 
 .sidebar {
-    max-width: 250px;
-    width: 20%;
+    max-width: 270px;
+    width: 25%;
     min-width: 190px;
     background-color: #212121;
-    padding: 20px;
+    padding: 12px;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
@@ -142,83 +142,56 @@ body {
     color: white;
     border: 2px solid transparent;
 }
-/* Misc */
-.channel-container.misc {
+
+
+.channel-container {
     background-color: transparent;
     border-color: #5d5d5d; /* Unselected Border */
 }
 
-.channel-container.misc.selected {
+.channel-container.selected {
     background-color: #5d5d5d; /* Selected Fill */
     border-color: #5d5d5d;
 }
 
-.channel-container.misc:hover,
-.channel-container.misc.selected:hover {
+.channel-container:hover,
+.channel-container.selected:hover {
     background-color: #8f8f8f; /* Hovered */
     border-color: #8f8f8f;
 }
 
-/* Business/Startups */
-.channel-container.business {
-    background-color: transparent;
-    border-color: #E65100; /* Unselected Border */
-}
-
-.channel-container.business.selected {
-    background-color: #E65100; /* Selected Fill */
-    border-color: #E65100;
-}
-
-.channel-container.business:hover,
-.channel-container.business.selected:hover {
-    background-color: #FF8C00; /* Hovered */
-    border-color: #FF8C00;
-}
-
-/* Ideology/Politics */
-.channel-container.ideology {
-    background-color: transparent;
-    border-color: #0A74DA; /* Unselected Border */
-}
-
-.channel-container.ideology.selected {
-    background-color: #1565C0; /* Selected Fill */
-    border-color: #1565C0;
-}
-
-.channel-container.ideology:hover,
-.channel-container.ideology.selected:hover {
-    background-color: #0A74DA; /* Hovered */
-    border-color: #0A74DA;
+.channel-type {
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+    flex: none;
 }
 
 /* Charter Cities/Statecraft */
-.channel-container.charter_cities {
-    background-color: transparent;
-    border-color: #1B5E20; /* Unselected Border */
+.channel-type.misc {
+    background-color: #8f8f8f; /* Unselected Border */
 }
 
-.channel-container.charter_cities.selected {
-    background-color: #1B5E20; /* Selected Fill */
-    border-color: #1B5E20;
+/* Business/Startups */
+.channel-type.business {
+    background-color: #E65100; /* Unselected Border */
 }
 
-.channel-container.charter_cities:hover,
-.channel-container.charter_cities.selected:hover {
-    background-color: #388E3C; /* Hovered */
-    border-color: #388E3C;
+/* Ideology/Politics */
+.channel-type.ideology {
+    background-color: royalblue; /* Unselected Border */
 }
 
-/* General Selected State */
-.channel-container.selected {
-    color: white;
+/* Charter Cities/Statecraft */
+.channel-type.charter_cities {
+    background-color: limegreen; /* Unselected Border */
 }
 
 .channel-container label {
     margin-inline: 5px;
-    /* color: #ffffff; */
     cursor: inherit;
+    width: 100%;
+    text-align: center;
 }
 
 .search-bar-section {
