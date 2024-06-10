@@ -262,6 +262,12 @@ button:hover {
     width: 100%;
 }
 
+@media (max-width: 1360px) {
+    .content-container {
+        flex-direction: column;
+    }
+}
+
 .score-container {
     display: flex;
     flex-direction: column;
