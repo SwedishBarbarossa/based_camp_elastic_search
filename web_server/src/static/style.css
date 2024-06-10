@@ -338,7 +338,7 @@ button:hover {
 }
 
 /* Media Queries for Mobile */
-@media (max-width: 1100px) {
+@media (max-width: 1030px) {
     body, .sidebar, .main-content, .search-bar-container, .search-bar-section, .results-container {
         padding: 0;
         flex-direction: column;
