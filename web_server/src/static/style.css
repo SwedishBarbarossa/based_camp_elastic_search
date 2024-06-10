@@ -139,6 +139,8 @@ body {
     justify-content: center;
     color: white;
     border: 2px solid transparent;
+    margin-inline: unset;
+    position: unset;
 }
 
 
@@ -190,6 +192,7 @@ body {
     cursor: inherit;
     width: 100%;
     text-align: center;
+    pointer-events: none;
 }
 
 .search-bar-section {

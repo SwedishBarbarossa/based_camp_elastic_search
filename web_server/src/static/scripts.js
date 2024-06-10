@@ -17,7 +17,7 @@ function buildChannelList() {
     const sortedChannels = channels.sort((a, b) => a[1].localeCompare(b[1])).sort((a, b) => a[2].localeCompare(b[2]));;
     for (let i = 0; i < channels.length; i++) {
         const channel = sortedChannels[i];
-        const channelElement = document.createElement("div");
+        const channelElement = document.createElement("button");
         let baseClassName = "channel-container";
         channelElement.className = baseClassName;
         channelElement.id = channel[0];
@@ -27,6 +27,7 @@ function buildChannelList() {
         const channelLabel = document.createElement("label");
         channelLabel.htmlFor = channel[0];
         channelLabel.textContent = channel[1];
+        channelLabel.className = "channel-label";
         channelElement.appendChild(channelLabel);
         channelList.appendChild(channelElement);
     }
@@ -292,6 +293,24 @@ function getSlugFromURL() {
 window.onload = function () {
     buildChannelList();
     document.getElementById('search-field').addEventListener('keypress', handleSeachEnter);
+    
+    /* prevent hover on touch */
+    document.body.addEventListener('touchstart', () => {
+        try { // prevent exception on browsers not supporting DOM styleSheets properly
+            for (var style in document.styleSheets) {
+                var styleSheet = document.styleSheets[style];
+                if (!styleSheet.cssRules) continue;
+        
+                for (var rule = styleSheet.cssRules.length - 1; rule >= 0; rule--) {
+                if (!styleSheet.cssRules[rule].selectorText) continue;
+        
+                if (styleSheet.cssRules[rule].selectorText.match(':hover')) {
+                    styleSheet.deleteRule(rule);
+                }
+                }
+            }
+            } catch (ex) {}
+    });
 
     const channels_element = document.getElementsByClassName('channel-container');
     for (let i = 0; i < channels_element.length; i++) {
