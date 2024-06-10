@@ -202,12 +202,15 @@ button:hover {
 }
 
 .header-container {
+    width: 100%;
+}
+
+.header-content {
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    width: 100%;
-    margin-bottom: 10px;
+    padding: 10px;
 }
 
 .content-container {

@@ -24,14 +24,18 @@ function createVideoGroupPill(videoId, segmentGroup) {
     headerContainer.className = "header-container";
     resultContainer.appendChild(headerContainer);
 
+    const headerContent = document.createElement("div");
+    headerContent.className = "header-content";
+    headerContainer.appendChild(headerContent);
+
     const toggleEmbedBtn = document.createElement("button");
     toggleEmbedBtn.textContent = "Show Video";
-    headerContainer.appendChild(toggleEmbedBtn);
+    headerContent.appendChild(toggleEmbedBtn);
 
     let topScore = segmentGroup.topScore;
     const segmentTitle = document.createElement("h3");
     segmentTitle.textContent = `Top Score: ${topScore.toFixed(3)}`;
-    headerContainer.appendChild(segmentTitle);
+    headerContent.appendChild(segmentTitle);
 
     const contentContainer = document.createElement("div");
     contentContainer.className = "content-container";
