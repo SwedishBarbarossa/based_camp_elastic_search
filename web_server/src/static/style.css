@@ -187,6 +187,11 @@ body {
     background-color: limegreen; /* Unselected Border */
 }
 
+/* Science/Math */
+.channel-type.science {
+    background-color: yellow; /* Unselected Border */
+}
+
 .channel-container label {
     margin-inline: 5px;
     cursor: inherit;

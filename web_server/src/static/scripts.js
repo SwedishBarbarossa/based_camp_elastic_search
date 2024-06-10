@@ -10,6 +10,11 @@ const channels = [ /* [Channel ID, Channel Name, Channel Type] */
     ["free_cities_foundation", "Free Cities Foundation", "charter_cities"],
     ["james_lindsay", "James Lindsay", "ideology"],
     ["jordan_b_peterson", "Jordan B Peterson", "ideology"],
+    ["chris_williamson", "Chris Williamson", "misc"],
+    ["numberphile", "Numberphile", "science"],
+    ["computerphile", "Computerphile", "science"],
+    ["ted", "TED", "misc"],
+    ["ryan_chapman", "Ryan Chapman", "ideology"],
 ];
 
 function buildChannelList() {
