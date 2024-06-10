@@ -134,45 +134,90 @@ body {
 .channel-container {
     display: flex;
     align-items: center;
-    background-color: #303030;
     padding: 10px;
     border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, color 0.3s, border 0.3s;
     justify-content: center;
+    color: white;
+    border: 2px solid transparent;
+}
+/* Misc */
+.channel-container.misc {
+    background-color: transparent;
+    border-color: #5d5d5d; /* Unselected Border */
 }
 
+.channel-container.misc.selected {
+    background-color: #5d5d5d; /* Selected Fill */
+    border-color: #5d5d5d;
+}
+
+.channel-container.misc:hover,
+.channel-container.misc.selected:hover {
+    background-color: #8f8f8f; /* Hovered */
+    border-color: #8f8f8f;
+}
+
+/* Business/Startups */
 .channel-container.business {
-    background-color: #853900;
+    background-color: transparent;
+    border-color: #E65100; /* Unselected Border */
 }
 
 .channel-container.business.selected {
-    background-color: #ff6f00;
+    background-color: #E65100; /* Selected Fill */
+    border-color: #E65100;
 }
 
+.channel-container.business:hover,
+.channel-container.business.selected:hover {
+    background-color: #FF8C00; /* Hovered */
+    border-color: #FF8C00;
+}
+
+/* Ideology/Politics */
 .channel-container.ideology {
-    background-color: #54145f;
+    background-color: transparent;
+    border-color: #0A74DA; /* Unselected Border */
 }
 
 .channel-container.ideology.selected {
-    background-color: #9c27b0;
+    background-color: #1565C0; /* Selected Fill */
+    border-color: #1565C0;
 }
 
+.channel-container.ideology:hover,
+.channel-container.ideology.selected:hover {
+    background-color: #0A74DA; /* Hovered */
+    border-color: #0A74DA;
+}
+
+/* Charter Cities/Statecraft */
 .channel-container.charter_cities {
-    background-color: #005763;
+    background-color: transparent;
+    border-color: #1B5E20; /* Unselected Border */
 }
 
 .channel-container.charter_cities.selected {
-    background-color: #00bcd4;
+    background-color: #1B5E20; /* Selected Fill */
+    border-color: #1B5E20;
 }
 
+.channel-container.charter_cities:hover,
+.channel-container.charter_cities.selected:hover {
+    background-color: #388E3C; /* Hovered */
+    border-color: #388E3C;
+}
+
+/* General Selected State */
 .channel-container.selected {
-    background-color: #ffffff46;
+    color: white;
 }
 
 .channel-container label {
     margin-inline: 5px;
-    color: #ffffff;
+    /* color: #ffffff; */
     cursor: inherit;
 }
 

@@ -21,10 +21,7 @@ function buildChannelList() {
         /* <div class="channel-container" id="based_camp">
                 <label for="based_camp">Based Camp</label>
             </div> */
-        let baseClassName = "channel-container";
-        if (channel[2] === "business") baseClassName += " business";
-        if (channel[2] === "charter_cities") baseClassName += " charter_cities";
-        if (channel[2] === "ideology") baseClassName += " ideology";
+        let baseClassName = `channel-container ${channel[2]}`;
         channelElement.className = baseClassName;
 
         channelElement.id = channel[0];
