@@ -19,24 +19,36 @@ from gRPC.client import send_embeddings
 from video_processing.src.main import main as processing
 
 if __name__ == "__main__":
-    RIP_AUDIO_FILES = True if int(os.environ["RIP_AUDIO_FILES"]) else False
+    RIP_AUDIO_FILES = True if os.environ["RIP_AUDIO_FILES"] == "1" else False
     ADDED_RECORD = os.path.join(root, "added.txt")
     while True:
         START_TIME = time.time()
         print(f"Starting at {time.ctime()}\n--------------------------------------\n")
-        previously_uploaded_files = processing(
-            rip=RIP_AUDIO_FILES, added_record=ADDED_RECORD
+        previously_uploaded_files = set(
+            processing(rip=RIP_AUDIO_FILES, added_record=ADDED_RECORD)
         )
-        current_files = [x for x in os.listdir("embeddings") if x.endswith(".npy")]
-        to_upload = list(set(current_files) - set(previously_uploaded_files))
+        current_files: list[tuple[str, str]] = [
+            (file, os.path.join(root, "embeddings", channel, video_id, file))
+            for channel in os.listdir(os.path.join(root, "embeddings"))
+            for video_id in os.listdir(os.path.join(root, "embeddings", channel))
+            for file in os.listdir(os.path.join(root, "embeddings", channel, video_id))
+            if file.endswith(".npy")
+        ]
+        to_upload = [
+            (file, path)
+            for file, path in current_files
+            if file not in previously_uploaded_files
+        ]
         if to_upload:
             embeddings: dict[str, npt.NDArray[np.float32]] = {}
-            for embedding in tqdm(to_upload, desc="Preparing embeddings"):
+            for filename, embedding_path in tqdm(
+                to_upload, desc="Preparing embeddings"
+            ):
                 try:
-                    arr = np.load(f"embeddings/{embedding}")
+                    arr = np.load(embedding_path)
                 except:  # delete corrupted files
-                    os.remove(f"embeddings/{embedding}")
-                embeddings[embedding.removesuffix(".npy")] = arr
+                    os.remove(embedding_path)
+                embeddings[filename.removesuffix(".npy")] = arr
 
             p_bar = tqdm(to_upload)
 

@@ -267,14 +267,15 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str, channel: str):
 
     # Transcript line pattern
     pattern = re.compile(r"\[(\d+\.\d+),(\d+\.\d+)\]\s+(.*)")
-    segments: list[tuple[str, str]] = []
+    segments: list[tuple[str, str, str]] = []
 
     p_bar = tqdm(files)
     for filename in p_bar:
         if not filename.endswith(".txt"):
             continue
 
-        p_bar.set_description(filename.removesuffix(".txt"))
+        video_id = filename.removesuffix(".txt")
+        p_bar.set_description(video_id)
         # --- get the time stamps from file ---
         # Step 1: Parse transcript lines
         file_path = os.path.join(transcripts_dir, filename)
@@ -324,8 +325,8 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str, channel: str):
 
         # save the concatenated texts with the proper name
         for start, end, text in concatenated_texts:
-            segment_name = f"{filename.removesuffix('.txt')} {start} {end}"
-            segments.append((segment_name, text))
+            segment_name = f"{start} {end}"
+            segments.append((video_id, segment_name, text))
 
     # Load the SentenceTransformer model
     SYMMETRIC_MODEL = SentenceTransformer(
@@ -336,21 +337,35 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str, channel: str):
     )
 
     # Encode the segments and save the .npy file
-    os.makedirs(embeddings_dir, exist_ok=True)
-    existing_embeddings = set(os.listdir(embeddings_dir))
-    for segment_name, text in tqdm(segments):
+    channel_embeddings_dir = os.path.join(embeddings_dir, channel)
+    os.makedirs(channel_embeddings_dir, exist_ok=True)
+    existing_embeddings = set(
+        [
+            filename
+            for video_id in os.listdir(channel_embeddings_dir)
+            for filename in os.listdir(os.path.join(channel_embeddings_dir, video_id))
+            if filename.endswith(".npy")
+        ]
+    )
+    video_ids = set([segment[0] for segment in segments])
+    for video_id in video_ids:
+        os.makedirs(os.path.join(channel_embeddings_dir, video_id), exist_ok=True)
+
+    for video_id, segment_name, text in tqdm(segments):
         # Symmetric encoding
-        sym_seg_name = f"sym {channel} {segment_name}.npy"
+        sym_seg_name = f"sym {channel} {video_id} {segment_name}.npy"
         if sym_seg_name not in existing_embeddings:
             embeddings = SYMMETRIC_MODEL.encode(text)
-            sym_seg_path = os.path.join(embeddings_dir, sym_seg_name)
+            sym_seg_path = os.path.join(channel_embeddings_dir, video_id, sym_seg_name)
             np.save(sym_seg_path, embeddings)
 
         # Asymmetric encoding
-        asym_seg_name = f"asym {channel} {segment_name}.npy"
+        asym_seg_name = f"asym {channel} {video_id} {segment_name}.npy"
         if asym_seg_name not in existing_embeddings:
             embeddings = ASYMMETRIC_MODEL.encode(text)
-            asym_seg_path = os.path.join(embeddings_dir, asym_seg_name)
+            asym_seg_path = os.path.join(
+                channel_embeddings_dir, video_id, asym_seg_name
+            )
             np.save(asym_seg_path, embeddings)
 
 
@@ -418,6 +433,9 @@ def main(added_record: str, rip=False) -> list[str]:
 
     # load config
     config = load_config(config_path)
+    if any(" " in creator for creator in config.keys()):
+        raise ValueError("Creator names cannot contain spaces")
+
     for i, (creator, creator_conf) in enumerate(config.items()):
         if i != 0:
             print("----------------------------------------------------------\n")
