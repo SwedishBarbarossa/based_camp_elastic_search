@@ -91,6 +91,7 @@ function createVideoGroupPill(videoId, segmentGroup) {
 
         let scoreDisplay = document.createElement("div");
         scoreDisplay.textContent = `Score: ${score.toFixed(3)}`;
+        scoreDisplay.className = "timestamp-score";
 
         let copyBtn = document.createElement("button");
         copyBtn.textContent = "Copy Link";

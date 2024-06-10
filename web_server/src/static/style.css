@@ -293,6 +293,10 @@ button:hover {
     justify-content: space-between;
 }
 
+.timestamp-score {
+    margin-inline: 6px;
+}
+
 .notification {
     position: absolute;
     bottom: 100%;
