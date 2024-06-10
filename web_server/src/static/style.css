@@ -307,6 +307,7 @@ button:hover {
     z-index: 1;
     opacity: 0;
     animation: slideUpFadeInOut 1s forwards;
+    pointer-events: none;
 }
 
 @keyframes slideUpFadeInOut {

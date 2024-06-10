@@ -32,6 +32,16 @@ function buildChannelList() {
     }
 }
 
+function writeStrToClipboard(str, btn) {
+    navigator.clipboard.writeText(str).then(() => {
+        let notification = document.createElement("div");
+        notification.textContent = "Copied!";
+        notification.className = "notification";
+        btn.appendChild(notification);
+        setTimeout(() => notification.remove(), 1000);
+    });
+}
+
 function onYouTubeIframeAPIReady() {
     // This function will be called by the YouTube IFrame API when it's ready
 }
@@ -84,15 +94,7 @@ function createVideoGroupPill(videoId, segmentGroup) {
 
         let copyBtn = document.createElement("button");
         copyBtn.textContent = "Copy Link";
-        copyBtn.onclick = function () {
-            navigator.clipboard.writeText(videoLink).then(() => {
-                let notification = document.createElement("div");
-                notification.textContent = "Copied!";
-                notification.className = "notification";
-                copyBtn.appendChild(notification);
-                setTimeout(() => notification.remove(), 1000);
-            });
-        };
+        copyBtn.onclick = () => writeStrToClipboard(videoLink, copyBtn);
 
         let playBtn = document.createElement("button");
         playBtn.textContent = "Play Timestamp";
@@ -228,13 +230,7 @@ function copySearchURL() {
     const q_type = getSearchType();
     if (q_type === 'asym') url.searchParams.set('asym', 'true');
 
-    navigator.clipboard.writeText(url).then(() => {
-        let notification = document.createElement("div");
-        notification.textContent = "Copied!";
-        notification.className = "notification";
-        searchCopyBtn.appendChild(notification);
-        setTimeout(() => notification.remove(), 1000);
-    });
+    writeStrToClipboard(url, searchCopyBtn);
 }
 
 function toggleChannelSelection(event) {
