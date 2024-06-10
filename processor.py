@@ -22,6 +22,7 @@ if __name__ == "__main__":
     RIP_AUDIO_FILES = True if int(os.environ["RIP_AUDIO_FILES"]) else False
     ADDED_RECORD = os.path.join(root, "added.txt")
     while True:
+        START_TIME = time.time()
         print(f"Starting at {time.ctime()}\n--------------------------------------\n")
         previously_uploaded_files = processing(
             rip=RIP_AUDIO_FILES, added_record=ADDED_RECORD
@@ -52,4 +53,6 @@ if __name__ == "__main__":
         print(f"Ending at {time.ctime()}\n--------------------------------------\n")
         if not RIP_AUDIO_FILES:
             break
-        time.sleep(60 * 60 * 3)
+
+        # sleep until START_TIME + 3 hours
+        time.sleep((START_TIME + 3 * 60 * 60) - time.time())
