@@ -142,8 +142,32 @@ body {
     justify-content: center;
 }
 
+.channel-container.business {
+    background-color: #853900;
+}
+
+.channel-container.business.selected {
+    background-color: #ff6f00;
+}
+
+.channel-container.ideology {
+    background-color: #54145f;
+}
+
+.channel-container.ideology.selected {
+    background-color: #9c27b0;
+}
+
+.channel-container.charter_cities {
+    background-color: #005763;
+}
+
+.channel-container.charter_cities.selected {
+    background-color: #00bcd4;
+}
+
 .channel-container.selected {
-    background-color: #747474;
+    background-color: #ffffff46;
 }
 
 .channel-container label {

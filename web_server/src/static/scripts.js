@@ -1,16 +1,40 @@
 let players = {};
 
-const channels = [
-    "based_camp",
-    "balaji_srinivasan",
-    "hormozis",
-    "y_combinator",
-    "charter_cities_institute",
-    "startup_societies_foundation",
-    "free_cities_foundation",
-    "james_lindsay",
-    "jordan_b_peterson"
+const channels = [ /* [Channel ID, Channel Name, Channel Type] */
+    ["based_camp", "Based Camp", "ideology"],
+    ["balaji_srinivasan", "Balaji Srinivasan", "misc"],
+    ["hormozis", "Hormozis", "business"],
+    ["y_combinator", "Y Combinator", "business"],
+    ["charter_cities_institute", "Charter Cities Institute", "charter_cities"],
+    ["startup_societies_foundation", "Startup Societies Foundation", "charter_cities"],
+    ["free_cities_foundation", "Free Cities Foundation", "charter_cities"],
+    ["james_lindsay", "James Lindsay", "ideology"],
+    ["jordan_b_peterson", "Jordan B Peterson", "ideology"],
 ];
+
+function buildChannelList() {
+    const channelList = document.getElementById("channels-container");
+    const sortedChannels = channels.sort((a, b) => a[1].localeCompare(b[1])).sort((a, b) => a[2].localeCompare(b[2]));;
+    for (let i = 0; i < channels.length; i++) {
+        const channel = sortedChannels[i];
+        const channelElement = document.createElement("div");
+        /* <div class="channel-container" id="based_camp">
+                <label for="based_camp">Based Camp</label>
+            </div> */
+        let baseClassName = "channel-container";
+        if (channel[2] === "business") baseClassName += " business";
+        if (channel[2] === "charter_cities") baseClassName += " charter_cities";
+        if (channel[2] === "ideology") baseClassName += " ideology";
+        channelElement.className = baseClassName;
+
+        channelElement.id = channel[0];
+        const channelLabel = document.createElement("label");
+        channelLabel.htmlFor = channel[0];
+        channelLabel.textContent = channel[1];
+        channelElement.appendChild(channelLabel);
+        channelList.appendChild(channelElement);
+    }
+}
 
 function onYouTubeIframeAPIReady() {
     // This function will be called by the YouTube IFrame API when it's ready
@@ -131,8 +155,9 @@ async function search() {
     }
 
     // Get channels selected from the sidebar
-    let selected_channels = channels.filter(channel => document.getElementById(channel).classList.contains('selected'));
-    if (selected_channels.length === 0) selected_channels = channels;
+    const channel_ids = channels.map(channel => channel[0]);
+    let selected_channels = channel_ids.filter(channel => document.getElementById(channel).classList.contains('selected'));
+    if (selected_channels.length === 0) selected_channels = channel_ids;
 
     // Hit API
     const channels_string = selected_channels.join(",");
@@ -194,11 +219,11 @@ function copySearchURL() {
     const query = document.getElementById(`search-field`).value;
     url.searchParams.set('search', query);
 
-    const channels = document.getElementsByClassName('channel-container');
+    const channels_element = document.getElementsByClassName('channel-container');
     let selected_channels = [];
-    for (let i = 0; i < channels.length; i++) {
-        if (channels[i].classList.contains('selected')) {
-            selected_channels.push(channels[i].id);
+    for (let i = 0; i < channels_element.length; i++) {
+        if (channels_element[i].classList.contains('selected')) {
+            selected_channels.push(channels_element[i].id);
         }
     }
     if (selected_channels.length > 0) {
@@ -267,16 +292,17 @@ function getSlugFromURL() {
     const urlParams = new URLSearchParams(window.location.search);
     const asym = urlParams.has('asym');
     const query = urlParams.get('search');
-    const channels = urlParams.get('channels');
-    return [asym, query ? decodeURIComponent(query) : '', channels ? channels : ''];
+    const slug_channels = urlParams.get('channels');
+    return [asym, query ? decodeURIComponent(query) : '', slug_channels ? slug_channels : ''];
 }
 
 window.onload = function () {
+    buildChannelList();
     document.getElementById('search-field').addEventListener('keypress', handleSeachEnter);
 
-    const channels = document.getElementsByClassName('channel-container');
-    for (let i = 0; i < channels.length; i++) {
-        channels[i].addEventListener('click', toggleChannelSelection);
+    const channels_element = document.getElementsByClassName('channel-container');
+    for (let i = 0; i < channels_element.length; i++) {
+        channels_element[i].addEventListener('click', toggleChannelSelection);
     }
 
     const slug = getSlugFromURL();
