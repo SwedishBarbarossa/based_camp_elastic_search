@@ -20,14 +20,11 @@ body {
     flex-direction: column;
     align-items: center;
     z-index: 2;
+    order: 1;
 }
 
 .sidebar-placeholder {
-    display: flex;
-    flex-direction: row;
-    width: 20%;
-    max-width: 240px;
-    padding: 20px;
+    order: 3;
 }
 
 .main-content {
@@ -37,6 +34,7 @@ body {
     width: 100%;
     overflow-y: scroll;
     max-height: 100%;
+    order: 2;
 }
 
 .search-type-toggle {
@@ -262,7 +260,7 @@ button:hover {
     width: 100%;
 }
 
-@media (max-width: 1360px) {
+@media (max-width: 1372px) {
     .content-container {
         flex-direction: column;
     }
@@ -358,6 +356,10 @@ button:hover {
         box-shadow: none;
     }
 
+    .sidebar-placeholder {
+        order: 2;
+    }
+
     .channels-container {
         width: 100%;
         display: flex;
@@ -370,6 +372,8 @@ button:hover {
     .main-content {
         gap: 10px;
         overflow-y: unset;
+        max-height: unset;
+        order: 3;
     }
 
     .search-bar-section {
