@@ -87,24 +87,36 @@ def rip_audio_files(
 
     playlists = config.get("youtube_playlists")
     if playlists:
-        for playlist in playlists:
-            link = playlist["link"]
-            playlist = pytube.Playlist(link)
-            vids.extend(list(playlist.videos))
+        try:
+            for playlist in playlists:
+                link = playlist["link"]
+                playlist = pytube.Playlist(link)
+                vids.extend(list(playlist.videos))
+        except Exception as e:
+            print("Failed to load playlist")
+            print(e)
 
     channels = config.get("youtube_channels")
     if channels:
-        for channel in channels:
-            link = channel["link"]
-            channel = pytube.Channel(link)
-            vids.extend(list(channel.videos))
+        try:
+            for channel in channels:
+                link = channel["link"]
+                channel = pytube.Channel(link)
+                vids.extend(list(channel.videos))
+        except Exception as e:
+            print("Failed to load channel")
+            print(e)
 
     videos = config.get("youtube_videos")
     if videos:
-        for video in videos:
-            link = video["link"]
-            video = pytube.YouTube(link)
-            vids.append(video)
+        try:
+            for video in videos:
+                link = video["link"]
+                video = pytube.YouTube(link)
+                vids.append(video)
+        except Exception as e:
+            print("Failed to load video")
+            print(e)
 
     # remove duplicate videos
     vids_dict: dict[str, pytube.YouTube] = {
@@ -137,7 +149,8 @@ def rip_audio_files(
             with open(age_restricted_path, "a", encoding="utf-8") as f:
                 f.write(f"{video_id}\n")
         except Exception as e:
-            print(f"Error downloading {video_id}: {e}")
+            print(f"Error downloading {video_id}")
+            print(e)
             continue
 
 
