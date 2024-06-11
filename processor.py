@@ -53,7 +53,12 @@ if __name__ == "__main__":
             p_bar = tqdm(to_upload)
 
             def callback(res: str):
-                p_bar.set_postfix({"res": res})
+                cleaned_res = res[23:-6]
+                split_str = cleaned_res.split(" ")
+                split_str[0] = split_str[0].ljust(4)
+                split_str[3] = split_str[3].rjust(5)
+                split_str[4] = split_str[4].rjust(5)
+                p_bar.set_postfix({"res": (" ").join(split_str)})
                 p_bar.update(1)
 
             res = send_embeddings(embeddings, callback)
