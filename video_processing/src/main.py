@@ -49,6 +49,7 @@ def rip_audio_files(
     transcripts_dir: str,
     age_restricted_path: str,
     config: CreatorConfig,
+    end_time: float,
 ):
     os.makedirs(audio_dir, exist_ok=True)
     os.makedirs(transcripts_dir, exist_ok=True)
@@ -114,10 +115,8 @@ def rip_audio_files(
     if not vids:
         return
 
-    START_TIME = time.time()
     for video in tqdm(vids):
-        # stop if it's been > 1 hour
-        if time.time() > START_TIME + 1 * 60 * 60:
+        if time.time() > end_time:
             break
 
         # save video audio
@@ -180,6 +179,7 @@ def transcribe_audio_files(
     audio_dir: str,
     transcripts_dir: str,
     get_segments: Callable[[str], AlignedTranscriptionResult],
+    end_time: float,
 ):
     # create a list of audio files that already exist and is > 1 mb
     audio_files: set[str] = {
@@ -206,6 +206,9 @@ def transcribe_audio_files(
     # Process each MP3 files in the directory
     p_bar = tqdm(files_to_transcribe)
     for filename in p_bar:
+        if time.time() > end_time:
+            break
+
         file_path = os.path.join(audio_dir, filename + ".mp3")
         output_path = os.path.join(transcripts_dir, filename + ".txt")
 
@@ -405,6 +408,7 @@ def main(added_record: str, rip=False) -> list[str]:
         root, "video_processing", "config", "video_processing_config.yaml"
     )
     age_restricted_path = os.path.join(audio_dir, "age_restricted.txt")
+    END_TIME = time.time() + 2.5 * 60 * 60
 
     # Load the Whisper model
     # You can choose another model size as needed
@@ -448,12 +452,14 @@ def main(added_record: str, rip=False) -> list[str]:
                 creator_transcripts_dir,
                 age_restricted_path,
                 creator_conf,
+                END_TIME,
             )
             print(f"Transcribing {creator} audio files...")
             transcribe_audio_files(
                 creator_audio_dir,
                 creator_transcripts_dir,
                 transcribe_audio_file,
+                END_TIME,
             )
         print(f"Encoding {creator} transcripts...")
         encode_transcripts(creator_transcripts_dir, embeddings_dir, creator)
