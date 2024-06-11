@@ -22,7 +22,7 @@ function buildChannelList() {
     const sortedChannels = channels.sort((a, b) => a[1].localeCompare(b[1])).sort((a, b) => a[2].localeCompare(b[2]));;
     for (let i = 0; i < channels.length; i++) {
         const channel = sortedChannels[i];
-        const channelElement = document.createElement("button");
+        const channelElement = document.createElement("div");
         let baseClassName = "channel-container";
         channelElement.className = baseClassName;
         channelElement.id = channel[0];
