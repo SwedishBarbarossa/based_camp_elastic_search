@@ -65,7 +65,7 @@ if __name__ == "__main__":
             p_bar.close()
 
             with open(ADDED_RECORD, "a", encoding="utf-8") as f:
-                f.writelines(f"{x}\n" for x in sorted(to_upload))
+                f.writelines(f"{x}\n" for x in sorted([y[0] for y in to_upload]))
 
         print(f"Ending at {time.ctime()}\n--------------------------------------\n")
         if not RIP_AUDIO_FILES:
