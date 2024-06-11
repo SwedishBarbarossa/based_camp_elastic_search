@@ -72,4 +72,6 @@ if __name__ == "__main__":
             break
 
         # sleep until START_TIME + 3 hours
-        time.sleep((START_TIME + 3 * 60 * 60) - time.time())
+        sleep_time = (START_TIME + 3 * 60 * 60) - time.time()
+        if sleep_time > 0:
+            time.sleep(sleep_time)
