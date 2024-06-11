@@ -15,6 +15,7 @@ const channels = [ /* [Channel ID, Channel Name, Channel Type] */
     ["computerphile", "Computerphile", "science"],
     ["ted", "TED", "misc"],
     ["ryan_chapman", "Ryan Chapman", "ideology"],
+    ["veritasium", "Veritasium", "science"],
 ];
 
 function buildChannelList() {
