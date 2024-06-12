@@ -51,6 +51,7 @@ EXISTING_CHANNELS = [
     "ted",
     "ryan_chapman",
     "veritasium",
+    "perun",
 ]
 
 fapi_app = FastAPI()

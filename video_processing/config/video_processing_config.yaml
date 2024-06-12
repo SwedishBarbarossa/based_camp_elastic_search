@@ -83,3 +83,11 @@ creators:
   veritasium:
     youtube_channels:
       - link: "https://www.youtube.com/channel/UCHnyfMqiRRG1u-2MsSQLbXA"
+  perun:
+    youtube_playlists:
+      - link: "https://www.youtube.com/playlist?list=PLbCbj03gdsWwJgbFnyKZ0joiTZuZY_7Iq"
+      - link: "https://www.youtube.com/playlist?list=PLbCbj03gdsWzhpuA0iZCjdwy5dgz8MKR0"
+      - link: "https://www.youtube.com/playlist?list=PLbCbj03gdsWwzqfbwspxqwJ_voSgkfTeS"
+      - link: "https://www.youtube.com/playlist?list=PLbCbj03gdsWw2q15_nFYqtdAEiQQ5lzP1"
+      - link: "https://www.youtube.com/playlist?list=PLbCbj03gdsWwoCf33m8sS2EeirnIneM3n"
+      - link: "https://www.youtube.com/playlist?list=PLbCbj03gdsWwxEZNyy_b0aHKFgmVT3G-3"
