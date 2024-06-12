@@ -454,8 +454,12 @@ def main(added_record: str, rip=False) -> list[str]:
         raise ValueError("Creator names cannot contain spaces")
 
     for i, (creator, creator_conf) in enumerate(config.items()):
+        if END_TIME < time.time():
+            break
+        
         if i != 0:
             print("----------------------------------------------------------\n")
+        
         creator_audio_dir = os.path.join(audio_dir, creator)
         creator_transcripts_dir = os.path.join(transcripts_dir, creator)
         if rip:
