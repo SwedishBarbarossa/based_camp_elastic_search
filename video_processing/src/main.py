@@ -59,16 +59,15 @@ def rip_audio_files(
     if not os.path.exists(age_restricted_path):
         open(age_restricted_path, "w")
 
-    age_restricted = set()
+    age_restricted: set[str] = set()
     with open(age_restricted_path, "r", encoding="utf-8") as f:
-        for line in f:
-            age_restricted.add(line.strip())
+        age_restricted = {x.strip() for x in f.readlines()}
 
     # get short video files
-    short_video_files = set()
+    short_video_files: set[str] = set()
     if os.path.exists(shorts_path):
         with open(shorts_path, "r", encoding="utf-8") as f:
-            short_video_files.add([x.strip() for x in f.readlines()])
+            short_video_files = {x.strip() for x in f.readlines()}
 
     # create a list of audio files that already exist and is > 1 mb
     audio_files: set[str] = {
@@ -88,7 +87,7 @@ def rip_audio_files(
         and os.path.getsize(os.path.join(transcripts_dir, file)) > 1000
     }
 
-    skip_files = audio_files.union(transcript_files)
+    skip_files = audio_files.union(transcript_files, short_video_files)
 
     vids: list[pytube.YouTube] = []
 
@@ -150,7 +149,7 @@ def rip_audio_files(
             )
         except pytube.exceptions.AgeRestrictedError:
             # add to list to download later
-            if video_id in age_restricted or video_id in short_video_files:
+            if video_id in age_restricted:
                 continue
 
             with open(age_restricted_path, "a", encoding="utf-8") as f:
