@@ -48,6 +48,7 @@ def rip_audio_files(
     audio_dir: str,
     transcripts_dir: str,
     age_restricted_path: str,
+    shorts_path: str,
     config: CreatorConfig,
     end_time: float,
 ):
@@ -62,6 +63,12 @@ def rip_audio_files(
     with open(age_restricted_path, "r", encoding="utf-8") as f:
         for line in f:
             age_restricted.add(line.strip())
+
+    # get short video files
+    short_video_files = set()
+    if os.path.exists(shorts_path):
+        with open(shorts_path, "r", encoding="utf-8") as f:
+            short_video_files.add([x.strip() for x in f.readlines()])
 
     # create a list of audio files that already exist and is > 1 mb
     audio_files: set[str] = {
@@ -143,7 +150,7 @@ def rip_audio_files(
             )
         except pytube.exceptions.AgeRestrictedError:
             # add to list to download later
-            if video_id in age_restricted:
+            if video_id in age_restricted or video_id in short_video_files:
                 continue
 
             with open(age_restricted_path, "a", encoding="utf-8") as f:
@@ -456,6 +463,7 @@ def main(record_dir: str, rip=False) -> set[str]:
         root, "video_processing", "config", "video_processing_config.yaml"
     )
     age_restricted_path = os.path.join(audio_dir, "age_restricted.txt")
+    shorts_path = os.path.join(audio_dir, "shorts.txt")  # manually added files
     END_TIME = time.time() + 2.5 * 60 * 60
 
     # Load the Whisper model
@@ -503,6 +511,7 @@ def main(record_dir: str, rip=False) -> set[str]:
                 creator_audio_dir,
                 creator_transcripts_dir,
                 age_restricted_path,
+                shorts_path,
                 creator_conf,
                 END_TIME,
             )
