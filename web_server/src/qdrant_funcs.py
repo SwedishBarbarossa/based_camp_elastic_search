@@ -1,15 +1,27 @@
 import os
 import uuid
-from typing import Literal, TypedDict
+from typing import Generator, Literal, TypedDict
 
 import numpy as np
 import numpy.typing as npt
 from qdrant_client import QdrantClient, models
 
+from services.record_funcs import add_embeddings_to_record, get_files_in_record
+
 
 class ModelDims(TypedDict):
     asymmetric: int
     symmetric: int
+
+
+class NPFileStruct(TypedDict):
+    vector: npt.NDArray[np.float32]
+    filename: str
+    q_type: str
+    channel: str
+    id: str
+    start: int
+    end: int
 
 
 def query_qdrant(
@@ -101,18 +113,97 @@ def create_qdrant_index(
     )
 
 
-def _name_to_payload(name: str) -> tuple[str, str, str, int, int]:
+def _name_to_filestruct(name: str, embeddings_dir: str) -> NPFileStruct:
     """Parse filename into (q_type, channel, id, start, end)"""
     split = name.removesuffix(".npy").split(" ")
+    path = os.path.join(embeddings_dir, split[1], split[2], name)
+    vector = np.load(path)
+
     try:
-        return split[0], split[1], split[2], int(split[3]), int(split[4])
+        return {
+            "vector": vector,
+            "filename": name,
+            "q_type": split[0],
+            "channel": split[1],
+            "id": split[2],
+            "start": int(split[3]),
+            "end": int(split[4]),
+        }
     except IndexError:
         raise ValueError(f"Invalid name: {name}")
 
 
+def _make_pointstruct(payload: NPFileStruct) -> models.PointStruct:
+    return models.PointStruct(
+        id=str(uuid.uuid4()),
+        vector=payload["vector"],  # type: ignore
+        payload={
+            "id": payload["id"],
+            "start": payload["start"],
+            "end": payload["end"],
+            "channel": payload["channel"],
+        },
+    )
+
+
+def _files_to_pointstructs(
+    files: list[str], embeddings_dir: str
+) -> list[models.PointStruct]:
+    return [_make_pointstruct(_name_to_filestruct(x, embeddings_dir)) for x in files]
+
+
+def remove_added_npy_files(embeddings_dir: str, record_dir: str):
+    os.makedirs(embeddings_dir, exist_ok=True)
+    file_paths: list[tuple[str, str]] = [
+        (x, os.path.join(embeddings_dir, channel_dir, video_dir, x))
+        for channel_dir in os.listdir(embeddings_dir)
+        for video_dir in os.listdir(os.path.join(embeddings_dir, channel_dir))
+        for x in os.listdir(os.path.join(embeddings_dir, channel_dir, video_dir))
+        if x.endswith(".npy")
+    ]
+
+    file_record = get_files_in_record(record_dir)
+
+    for npy_file, path in file_paths:
+        if npy_file in file_record:
+            os.remove(path)
+
+    for channel_dir in os.listdir(embeddings_dir):
+        for video_dir in os.listdir(os.path.join(embeddings_dir, channel_dir)):
+            # remove empty video folders
+            if not os.listdir(os.path.join(embeddings_dir, channel_dir, video_dir)):
+                os.rmdir(os.path.join(embeddings_dir, channel_dir, video_dir))
+
+        # remove empty channel folders
+        if not os.listdir(os.path.join(embeddings_dir, channel_dir)):
+            os.rmdir(os.path.join(embeddings_dir, channel_dir))
+
+
+def _add_embeddings(
+    files: list[str], embeddings_dir: str, record_dir: str, client: QdrantClient
+) -> None:
+    """Add pointstructs to Qdrant"""
+    asym_files = [x for x in files if x.startswith("asym")]
+    asym_points = _files_to_pointstructs(asym_files, embeddings_dir)
+    client.upload_points(collection_name="asym", points=asym_points)
+    add_embeddings_to_record(record_dir, asym_files)
+
+    sym_files = [x for x in files if x.startswith("sym")]
+    sym_points = _files_to_pointstructs(sym_files, embeddings_dir)
+    client.upload_points(collection_name="sym", points=sym_points)
+    add_embeddings_to_record(record_dir, sym_files)
+
+    remove_added_npy_files(embeddings_dir, record_dir)
+
+
+def _batch_list(files: list[str], batch_size: int) -> Generator[list[str], None, None]:
+    for i in range(0, len(files), batch_size):
+        yield files[i : i + batch_size]
+
+
 def add_to_qdrant(
     embeddings_dir: str,
-    record_path: str,
+    record_dir: str,
     client: QdrantClient,
     dims: ModelDims,
 ) -> None:
@@ -122,53 +213,19 @@ def add_to_qdrant(
     create_qdrant_collection("sym", client, dims["symmetric"])
     create_qdrant_index("channel", "sym", client)
 
-    already_added: set[str] = set()
-    if os.path.exists(record_path):
-        with open(record_path, "r", encoding="utf-8") as f:
-            already_added = {x.strip() for x in f.readlines()}
-    else:
-        # create the file
-        with open(record_path, "w", encoding="utf-8") as f:
-            pass
+    already_added: set[str] = get_files_in_record(record_dir)
 
     os.makedirs(embeddings_dir, exist_ok=True)
     embeddings = [
-        x
-        for x in os.listdir(embeddings_dir)
-        if x.endswith(".npy") and x not in already_added
-    ]
-    payloads = [_name_to_payload(x) for x in embeddings]
-
-    # clear record
-    already_added = set()
-
-    sym_points = []
-    asym_points = []
-    for i, (embedding, (q_type, channel, id, start, end)) in enumerate(
-        zip(embeddings, payloads)
-    ):
-        vector = np.load(embeddings_dir + "/" + embedding)
-
-        point = models.PointStruct(
-            id=str(uuid.uuid4()),
-            vector=vector,
-            payload={"id": id, "start": start, "end": end, "channel": channel},
+        embedding
+        for channel_dir in os.listdir(embeddings_dir)
+        for video_dir in os.listdir(os.path.join(embeddings_dir, channel_dir))
+        for embedding in os.listdir(
+            os.path.join(embeddings_dir, channel_dir, video_dir)
         )
+        if embedding.endswith(".npy") and embedding not in already_added
+    ]
+    already_added = set()  # clear record
 
-        if q_type == "sym":
-            sym_points.append(point)
-        else:
-            asym_points.append(point)
-
-        if i % 1000 == 999:
-            client.upload_points(collection_name="sym", points=sym_points)
-            client.upload_points(collection_name="asym", points=asym_points)
-            sym_points = []
-            asym_points = []
-
-    client.upload_points(collection_name="sym", points=sym_points)
-    client.upload_points(collection_name="asym", points=asym_points)
-
-    # add to record
-    with open(record_path, "a", encoding="utf-8") as f:
-        f.writelines(f"{x}\n" for x in sorted(embeddings))
+    for batch in _batch_list(embeddings, 10_000):
+        _add_embeddings(batch, embeddings_dir, record_dir, client)

@@ -15,7 +15,7 @@ from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 from whisperx.alignment import AlignedTranscriptionResult
 
-from services.upload_comparison import calculate_checksum
+from services.record_funcs import calculate_record_file_checksums, get_files_in_record
 
 
 class ConfigLink(TypedDict):
@@ -367,7 +367,14 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str, channel: str):
     for video_id in video_ids:
         os.makedirs(os.path.join(channel_embeddings_dir, video_id), exist_ok=True)
 
-    for video_id, segment_name, text in tqdm(segments):
+    segments_to_encode = [
+        (video_id, segment_name, text)
+        for video_id, segment_name, text in segments
+        if f"sym {channel} {video_id} {segment_name}.npy" not in existing_embeddings
+        and f"asym {channel} {video_id} {segment_name}.npy" not in existing_embeddings
+    ]
+
+    for video_id, segment_name, text in tqdm(segments_to_encode):
         # Symmetric encoding
         sym_seg_name = f"sym {channel} {video_id} {segment_name}.npy"
         if sym_seg_name not in existing_embeddings:
@@ -385,34 +392,62 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str, channel: str):
             np.save(asym_seg_path, embeddings)
 
 
-def get_uploaded_files(added_record: str) -> list[str]:
-    # get local file hash
-    local_hash = ""
-    local_file_path = added_record
-    if os.path.exists(local_file_path):
-        local_hash = calculate_checksum(local_file_path)
+def get_uploaded_files(record_dir: str) -> set[str]:
+    # get local file hashes
+    checksums = calculate_record_file_checksums(record_dir)
 
+    # get remote file hashes
     address: str = os.environ["HOST_ADDRESS"]
-    # get remote file hash
+
+    # get remote file hashes, json dict
     remote_hash_response = requests.get(f"{address}/added_hash")
-    remote_hash = remote_hash_response.text.strip('"')
 
-    # if they don't match, save the remote file to local_file_path
-    print(f"local hash: {local_hash}\nremote hash: {remote_hash}")
-    if local_hash != remote_hash:
-        file_response = requests.get(f"{address}/added.txt")
-        with open(local_file_path, "w", encoding="utf-8") as f:
-            f.write(file_response.text)
+    if remote_hash_response.status_code != 200:
+        raise Exception("Failed to get remote hash")
 
-        print(f"new local hash: {calculate_checksum(local_file_path)}")
+    remote_checksums: dict[str, list[str]] = remote_hash_response.json()
 
-        return file_response.text.split("\n")
+    # compare
+    not_matching: list[str] = []
 
-    with open(local_file_path, "r", encoding="utf-8") as f:
-        return f.read().split("\n")
+    for filename in checksums.keys() | remote_checksums.keys():
+        if checksums.get(filename) != remote_checksums.get(filename):
+            not_matching.append(filename)
+
+    # print not matching files
+    if not_matching:
+        print("Not matching files:")
+        for filename in not_matching:
+            print(
+                f"{filename}",
+                f"local: {checksums.get(filename)}",
+                f"remote: {remote_checksums.get(filename)}",
+                sep="\n",
+            )
+
+    # download the non-matching files
+    if not_matching:
+        for filename in not_matching:
+            res = requests.get(f"{address}/added/{filename}")
+
+            if res.status_code == 200:
+                with open(os.path.join(record_dir, filename), "wb") as f:
+                    f.write(res.content)
+
+                continue
+
+            if res.status_code == 404:
+                with open(os.path.join(record_dir, filename), "w") as f:
+                    f.write("")
+
+                continue
+
+            raise Exception("Failed to download file")
+
+    return get_files_in_record(record_dir)
 
 
-def main(added_record: str, rip=False) -> list[str]:
+def main(record_dir: str, rip=False) -> set[str]:
     root = os.path.dirname(os.path.abspath(__file__)).split("video_processing")[0]
     audio_dir = os.path.join(root, "audio")
     transcripts_dir = os.path.join(root, "transcriptions")
@@ -456,10 +491,10 @@ def main(added_record: str, rip=False) -> list[str]:
     for i, (creator, creator_conf) in enumerate(config.items()):
         if END_TIME < time.time():
             break
-        
+
         if i != 0:
             print("----------------------------------------------------------\n")
-        
+
         creator_audio_dir = os.path.join(audio_dir, creator)
         creator_transcripts_dir = os.path.join(transcripts_dir, creator)
         if rip:
@@ -482,4 +517,4 @@ def main(added_record: str, rip=False) -> list[str]:
         encode_transcripts(creator_transcripts_dir, embeddings_dir, creator)
 
     # return the previously uploaded files on the server
-    return get_uploaded_files(added_record)
+    return get_uploaded_files(record_dir)

@@ -5,6 +5,8 @@ import grpc
 import numpy as np
 import numpy.typing as npt
 
+from services.record_funcs import _calculate_checksum_of_str
+
 from . import service_pb2, service_pb2_grpc
 
 HOST_IP = os.environ["HOST_IP"]
@@ -12,7 +14,7 @@ GRPC_PORT = os.environ["GRPC_PORT"]
 
 _AUTH_HEADER_KEY = "authorization"
 GRPC_API_KEY = os.environ["GRPC_API_KEY"]
-_AUTH_HEADER_VALUE = GRPC_API_KEY or "test_token"
+_AUTH_HEADER_VALUE = _calculate_checksum_of_str(GRPC_API_KEY or "test_token")
 
 
 class AuthInterceptor(grpc.UnaryUnaryClientInterceptor):

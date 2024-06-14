@@ -12,9 +12,8 @@ from qdrant_client import QdrantClient
 from sentence_transformers import SentenceTransformer
 
 from gRPC.server import serve as grpc_server
-from services.upload_comparison import calculate_checksum
+from services.record_funcs import calculate_record_file_checksums, split_record_file
 from web_server.src.qdrant_funcs import add_to_qdrant, query_qdrant
-from web_server.src.server_funcs import remove_added_npy_files
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 EMBEDDINGS_DIR = os.path.join(ROOT, "server_embeddings")
@@ -26,6 +25,7 @@ STATIC_PATH = os.path.join(WORK_DIR, "static")
 INDEX_PATH = os.path.join(STATIC_PATH, "index.html")
 STYLE_PATH = os.path.join(STATIC_PATH, "style.css")
 RECORD_PATH = os.path.join(STATIC_PATH, "added.txt")
+RECORD_DIR = os.path.join(STATIC_PATH, "added")
 
 SYM_DIM = 384
 ASYM_DIM = 384
@@ -76,6 +76,11 @@ def update_qdrant():
     """
     global last_grpc_call_time, last_index_rebuild
     wait_seconds = np.inf
+
+    if os.path.exists(RECORD_PATH):
+        split_record_file(RECORD_PATH, RECORD_DIR)
+        os.remove(RECORD_PATH)
+
     while True:
         with lock:
             if last_grpc_call_time is not None:
@@ -88,11 +93,10 @@ def update_qdrant():
             print("Updating Qdrant...")
             add_to_qdrant(
                 EMBEDDINGS_DIR,
-                RECORD_PATH,
+                RECORD_DIR,
                 qdant_client,
                 {"asymmetric": ASYM_DIM, "symmetric": SYM_DIM},
             )
-            remove_added_npy_files(EMBEDDINGS_DIR, RECORD_PATH)
             print("Qdrant updated.")
 
             # Reset the timer
@@ -161,7 +165,7 @@ async def latest_rebuild():
 
 @fapi_app.get("/added_hash")
 async def added_hash():
-    return calculate_checksum(RECORD_PATH)
+    return calculate_record_file_checksums(RECORD_DIR)
 
 
 def last_grpc_call_time_callback(*args, **kwargs):

@@ -16,16 +16,23 @@ else:
 
 
 from gRPC.client import send_embeddings
+from services.record_funcs import add_embeddings_to_record, split_record_file
 from video_processing.src.main import main as processing
 
 if __name__ == "__main__":
     RIP_AUDIO_FILES = True if os.environ["RIP_AUDIO_FILES"] == "1" else False
     ADDED_RECORD = os.path.join(root, "added.txt")
+    ADDED_RECORD_DIR = os.path.join(root, "added")
+
+    if os.path.exists(ADDED_RECORD):
+        split_record_file(ADDED_RECORD, ADDED_RECORD_DIR)
+        os.remove(ADDED_RECORD)
+
     while True:
         START_TIME = time.time()
         print(f"Starting at {time.ctime()}\n--------------------------------------\n")
-        previously_uploaded_files = set(
-            processing(rip=RIP_AUDIO_FILES, added_record=ADDED_RECORD)
+        previously_uploaded_files = processing(
+            rip=RIP_AUDIO_FILES, record_dir=ADDED_RECORD_DIR
         )
         current_files: list[tuple[str, str]] = [
             (file, os.path.join(root, "embeddings", channel, video_id, file))
@@ -64,8 +71,7 @@ if __name__ == "__main__":
             res = send_embeddings(embeddings, callback)
             p_bar.close()
 
-            with open(ADDED_RECORD, "a", encoding="utf-8") as f:
-                f.writelines(f"{x}\n" for x in sorted([y[0] for y in to_upload]))
+            add_embeddings_to_record(ADDED_RECORD_DIR, [x[0] for x in to_upload])
 
         print(f"Ending at {time.ctime()}\n--------------------------------------\n")
         if not RIP_AUDIO_FILES:

@@ -1,21 +1,26 @@
 import os
 from concurrent import futures
+from time import sleep
 
 import grpc
 import numpy as np
 from grpc import StatusCode
 
+from services.record_funcs import _calculate_checksum_of_str
+
 from . import service_pb2, service_pb2_grpc
 
 _AUTH_HEADER_KEY = "authorization"
 GRPC_API_KEY = os.environ["GRPC_API_KEY"]
-_AUTH_HEADER_VALUE = GRPC_API_KEY or "test_token"
+_AUTH_HEADER_VALUE = _calculate_checksum_of_str(GRPC_API_KEY or "test_token")
 
 
 class SignatureValidationInterceptor(grpc.ServerInterceptor):
     def __init__(self):
         def abort(ignored_request, context):
             print("invalid")
+            random_sleep_duration = float(np.random.normal(2, 0.5))
+            sleep(random_sleep_duration)
             context.abort(StatusCode.UNAUTHENTICATED, "Invalid signature")
 
         self._abort_handler = grpc.unary_unary_rpc_method_handler(abort)
@@ -36,10 +41,14 @@ class StringAndArrayService(service_pb2_grpc.StringAndArrayServiceServicer):
 
     def ProcessData(self, request, context):
         # Example processing: sum of the array elements + string length
-        name = request.input_string
+        name: str = request.input_string
+        split_name = name.split(" ")
+        channel = split_name[1]
+        video_id = split_name[2]
         array = np.array(request.array, dtype=np.float32)
-        os.makedirs(self.embeddings_dir, exist_ok=True)
-        np.save(os.path.join(self.embeddings_dir, name + ".npy"), array)
+        save_path = os.path.join(self.embeddings_dir, channel, video_id)
+        os.makedirs(save_path, exist_ok=True)
+        np.save(os.path.join(save_path, name + ".npy"), array)
         if self.callback is not None:
             self.callback(name)
         result = f"Array {request.input_string} saved"
