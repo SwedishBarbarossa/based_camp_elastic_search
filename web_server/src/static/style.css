@@ -41,7 +41,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-bottom: 20px;
+    padding-bottom: 10px;
 }
 
 .search-bar-container {
@@ -197,6 +197,11 @@ body {
 /* Science/Math */
 .channel-type.science {
     background-color: yellow;
+}
+
+/* War */
+.channel-type.war {
+    background-color: red;
 }
 
 .channel-container label {
