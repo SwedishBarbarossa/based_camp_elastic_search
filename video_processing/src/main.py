@@ -2,6 +2,7 @@ import os
 import re
 import subprocess
 import time
+from traceback import print_tb
 from typing import Callable, TypedDict
 
 import numpy as np
@@ -100,7 +101,7 @@ def rip_audio_files(
                 vids.extend(list(playlist.videos))
         except Exception as e:
             print("Failed to load playlist")
-            print(e)
+            raise e
 
     channels = config.get("youtube_channels")
     if channels:
@@ -111,7 +112,7 @@ def rip_audio_files(
                 vids.extend(list(channel.videos))
         except Exception as e:
             print("Failed to load channel")
-            print(e)
+            raise e
 
     videos = config.get("youtube_videos")
     if videos:
@@ -122,7 +123,7 @@ def rip_audio_files(
                 vids.append(video)
         except Exception as e:
             print("Failed to load video")
-            print(e)
+            raise e
 
     # remove duplicate videos
     vids_dict: dict[str, pytube.YouTube] = {
@@ -156,8 +157,7 @@ def rip_audio_files(
                 f.write(f"{video_id}\n")
         except Exception as e:
             print(f"Error downloading {video_id}")
-            print(e)
-            continue
+            raise e
 
 
 def _get_media_duration(file_path):
@@ -495,6 +495,8 @@ def main(record_dir: str, rip=False) -> set[str]:
     if any(" " in creator for creator in config.keys()):
         raise ValueError("Creator names cannot contain spaces")
 
+    rip_audio = rip
+    transcribe_audio = rip
     for i, (creator, creator_conf) in enumerate(config.items()):
         if END_TIME < time.time():
             break
@@ -505,16 +507,24 @@ def main(record_dir: str, rip=False) -> set[str]:
 
         creator_audio_dir = os.path.join(audio_dir, creator)
         creator_transcripts_dir = os.path.join(transcripts_dir, creator)
-        if rip:
-            print(f"({i + 1}/{len(config.keys())}) Ripping {creator} audio files...")
-            rip_audio_files(
-                creator_audio_dir,
-                creator_transcripts_dir,
-                age_restricted_path,
-                shorts_path,
-                creator_conf,
-                END_TIME,
-            )
+        if rip_audio:
+            print(f"Ripping {creator} audio files...")
+            try:
+                rip_audio_files(
+                    creator_audio_dir,
+                    creator_transcripts_dir,
+                    age_restricted_path,
+                    shorts_path,
+                    creator_conf,
+                    END_TIME,
+                )
+            except Exception as e:
+                print(f"Exception occurred while ripping {creator} audio files:")
+                print(e)
+                print_tb(e.__traceback__)
+                rip_audio = False
+
+        if transcribe_audio:
             print(f"Transcribing {creator} audio files...")
             transcribe_audio_files(
                 creator_audio_dir,
