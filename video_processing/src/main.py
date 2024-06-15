@@ -47,7 +47,28 @@ def load_config(config_path: str) -> dict[str, CreatorConfig]:
 
 def verify_audio_file(audio_file_path: str) -> bool:
     """Verify that the audio file is greater than 1 MB"""
-    return os.path.getsize(audio_file_path) > 10**6
+    return (
+        audio_file_path.endswith(".mp3")
+        and os.path.exists(audio_file_path)
+        and os.path.getsize(audio_file_path) > 10**6
+    )
+
+
+def verify_transcript_file(transcript_file_path: str) -> bool:
+    """Verify that the transcript file is greater than 1 KB"""
+    return (
+        transcript_file_path.endswith(".txt")
+        and os.path.exists(transcript_file_path)
+        and os.path.getsize(transcript_file_path) > 10**3
+    )
+
+
+def clean_segment_text(text: str) -> str:
+    """Clean transcription segment text"""
+    base_clean = text.replace("\n", " ").replace("¶", " ").strip()
+    while "  " in base_clean:
+        base_clean = base_clean.replace("  ", " ")
+    return base_clean
 
 
 def rip_audio_files(
@@ -212,18 +233,14 @@ def transcribe_audio_files(
     audio_files: set[str] = {
         file.removesuffix(".mp3")
         for file in os.listdir(audio_dir)
-        if (
-            file.endswith(".mp3")
-            and os.path.getsize(os.path.join(audio_dir, file)) > 10**6
-        )
+        if verify_audio_file(os.path.join(audio_dir, file))
     }
 
     # create a list of transcripts that already exist and are > 1 kb
     transcript_files: set[str] = {
         file.removesuffix(".txt")
         for file in os.listdir(transcripts_dir)
-        if file.endswith(".txt")
-        and os.path.getsize(os.path.join(transcripts_dir, file)) > 10**3
+        if verify_transcript_file(os.path.join(transcripts_dir, file))
     }
 
     files_to_transcribe = sorted(audio_files - transcript_files)
@@ -236,7 +253,7 @@ def transcribe_audio_files(
         if time.time() > end_time:
             break
 
-        file_path = os.path.join(audio_dir, filename + ".mp3")
+        audio_path = os.path.join(audio_dir, filename + ".mp3")
         output_path = os.path.join(transcripts_dir, filename + ".txt")
 
         # if transcript already exists and is longer than 10 lines, skip
@@ -248,40 +265,35 @@ def transcribe_audio_files(
 
         if skip:
             # delete the audio file
-            os.remove(file_path)
+            os.remove(audio_path)
             continue
 
         duration = _get_media_duration(os.path.join(audio_dir, filename + ".mp3"))
         p_bar.set_description(f"{filename} [{duration}]")
-        result = get_segments(file_path)
-
-        def clean_segment_text(text: str) -> str:
-            base_clean = text.replace("\n", " ").replace("¶", " ").strip()
-            while "  " in base_clean:
-                base_clean = base_clean.replace("  ", " ")
-            return base_clean
+        result = get_segments(audio_path)
 
         cleaned_segments = [
             segment
             for segment in [
-                (clean_segment_text(segment["text"]), segment["start"], segment["end"])
+                (segment["start"], segment["end"], clean_segment_text(segment["text"]))
                 for segment in result["segments"]
             ]
-            if segment[0] and len(segment[0]) > 1
+            if segment[2] and len(segment[2]) > 1
         ]
         if not cleaned_segments:
             continue
 
+        formatted_segments = [
+            f"[{segment[0]:.3f},{segment[1]:.3f}] {segment[2]}"
+            for segment in cleaned_segments
+        ]
+
         with open(output_path, "w", encoding="utf-8") as output_file:
-            for segment in cleaned_segments:
-                text = segment[0]
-                start = segment[1]
-                end = segment[2]
-                output_file.write(f"[{start:.3f},{end:.3f}] {text}\n")
+            output_file.write("\n".join(formatted_segments))
 
         # delete the audio file if the transcription exists
-        if os.path.exists(output_path):
-            os.remove(file_path)
+        if verify_transcript_file(output_path):
+            os.remove(audio_path)
 
 
 def _split_long_segments(
@@ -505,8 +517,17 @@ def main(record_dir: str, rip=False) -> set[str]:
         """Transcription hook"""
         audio = whisperx.load_audio(audio_file_path)
         result = model.transcribe(audio, batch_size=16, language="en")
+        cleaned_segments = []
+        for segment in result["segments"]:
+            x = segment
+            x["text"] = clean_segment_text(x["text"])
+            if x["text"] == "":
+                continue
+
+            cleaned_segments.append(x)
+
         return whisperx.align(
-            result["segments"],
+            cleaned_segments,
             model_a,
             metadata,
             audio,
