@@ -246,18 +246,34 @@ def transcribe_audio_files(
         duration = _get_media_duration(os.path.join(audio_dir, filename + ".mp3"))
         p_bar.set_description(f"{filename} [{duration}]")
         result = get_segments(file_path)
-        with open(output_path, "w", encoding="utf-8") as output_file:
-            for segment in result["segments"]:
-                text = segment["text"].strip()
-                if not text or len(text) == 1 or text == "¶¶":
-                    continue
 
-                start = segment["start"]
-                end = segment["end"]
+        def clean_segment_text(text: str) -> str:
+            base_clean = text.replace("\n", " ").replace("¶", " ").strip()
+            while "  " in base_clean:
+                base_clean = base_clean.replace("  ", " ")
+            return base_clean
+
+        cleaned_segments = [
+            segment
+            for segment in [
+                (clean_segment_text(segment["text"]), segment["start"], segment["end"])
+                for segment in result["segments"]
+            ]
+            if segment[0] and len(segment[0]) > 1
+        ]
+        if not cleaned_segments:
+            continue
+
+        with open(output_path, "w", encoding="utf-8") as output_file:
+            for segment in cleaned_segments:
+                text = segment[0]
+                start = segment[1]
+                end = segment[2]
                 output_file.write(f"[{start:.3f},{end:.3f}] {text}\n")
 
-        # delete the audio file
-        os.remove(file_path)
+        # delete the audio file if the transcription exists
+        if os.path.exists(output_path):
+            os.remove(file_path)
 
 
 def _split_long_segments(
