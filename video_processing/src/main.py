@@ -109,7 +109,7 @@ def rip_audio_files(
     # add small audio to short video file
     if small_audio:
         with open(shorts_path, "a", encoding="utf-8") as f:
-            f.write("\n".join([x.removesuffix(".mp3") for x in small_audio]))
+            f.write("\n".join([x.removesuffix(".mp3") for x in small_audio]) + "\n")
 
     # get short video files
     short_video_files: set[str] = set()
@@ -194,7 +194,7 @@ def rip_audio_files(
                 continue
 
             with open(age_restricted_path, "a", encoding="utf-8") as f:
-                f.write(f"\n{video_id}")
+                f.write(f"{video_id}\n")
         except Exception as e:
             print(f"Error downloading {video_id}")
             raise e
