@@ -82,27 +82,39 @@ def rip_audio_files(
     os.makedirs(audio_dir, exist_ok=True)
     os.makedirs(transcripts_dir, exist_ok=True)
 
-    # create age restricted file if it doesn't exist
+    # create age restricted file and shorts file if they doesn't exist
     if not os.path.exists(age_restricted_path):
-        open(age_restricted_path, "w")
+        with open(age_restricted_path, "w", encoding="utf-8") as f:
+            f.write("")
+
+    if not os.path.exists(shorts_path):
+        with open(shorts_path, "w", encoding="utf-8") as f:
+            f.write("")
 
     age_restricted: set[str] = set()
     with open(age_restricted_path, "r", encoding="utf-8") as f:
         age_restricted = {x.strip() for x in f.readlines()}
 
-    # get short video files
-    short_video_files: set[str] = set()
-    if os.path.exists(shorts_path):
-        with open(shorts_path, "r", encoding="utf-8") as f:
-            short_video_files = {x.strip() for x in f.readlines()}
-
-    all_audio = {file for file in os.listdir(audio_dir)}
+    all_audio = {file for file in os.listdir(audio_dir) if file.endswith(".mp3")}
 
     # delete small audio files
-    small_audio = {file for file in all_audio if not verify_audio_file(file)}
-
+    small_audio = {
+        file
+        for file in all_audio
+        if not verify_audio_file(os.path.join(audio_dir, file))
+    }
     for file in small_audio:
         os.remove(os.path.join(audio_dir, file))
+
+    # add small audio to short video file
+    if small_audio:
+        with open(shorts_path, "a", encoding="utf-8") as f:
+            f.write("\n".join([x.removesuffix(".mp3") for x in small_audio]))
+
+    # get short video files
+    short_video_files: set[str] = set()
+    with open(shorts_path, "r", encoding="utf-8") as f:
+        short_video_files = {x.strip() for x in f.readlines()}
 
     # create a list of audio files that already exist and is > 1 mb
     existing_audio: set[str] = {
@@ -113,8 +125,7 @@ def rip_audio_files(
     transcript_files: set[str] = {
         file.removesuffix(".txt")
         for file in os.listdir(transcripts_dir)
-        if file.endswith(".txt")
-        and os.path.getsize(os.path.join(transcripts_dir, file)) > 1000
+        if verify_transcript_file(os.path.join(transcripts_dir, file))
     }
 
     skip_files = existing_audio.union(transcript_files, short_video_files)
@@ -183,7 +194,7 @@ def rip_audio_files(
                 continue
 
             with open(age_restricted_path, "a", encoding="utf-8") as f:
-                f.write(f"{video_id}\n")
+                f.write(f"\n{video_id}")
         except Exception as e:
             print(f"Error downloading {video_id}")
             raise e
@@ -498,7 +509,7 @@ def main(record_dir: str, rip=False) -> set[str]:
         root, "video_processing", "config", "video_processing_config.yaml"
     )
     age_restricted_path = os.path.join(audio_dir, "age_restricted.txt")
-    shorts_path = os.path.join(audio_dir, "shorts.txt")  # manually added files
+    shorts_path = os.path.join(audio_dir, "shorts.txt")
     END_TIME = time.time() + 2.5 * 60 * 60
 
     # Load the Whisper model
