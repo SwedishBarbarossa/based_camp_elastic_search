@@ -499,8 +499,9 @@ def main(record_dir: str, rip=False) -> set[str]:
         if END_TIME < time.time():
             break
 
-        if i != 0:
-            print("----------------------------------------------------------\n")
+        mid_str = f"({i + 1}/{len(config.keys())})"
+        mid_str_len = len(mid_str)
+        print("\n" + mid_str.rjust(30 + mid_str_len // 2, "-").ljust(60, "-"))
 
         creator_audio_dir = os.path.join(audio_dir, creator)
         creator_transcripts_dir = os.path.join(transcripts_dir, creator)
