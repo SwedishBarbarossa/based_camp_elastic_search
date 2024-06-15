@@ -68,7 +68,7 @@ def clean_segment_text(text: str) -> str:
     base_clean = text.replace("\n", " ").replace("¶", " ").strip()
     while "  " in base_clean:
         base_clean = base_clean.replace("  ", " ")
-    return base_clean
+    return base_clean if base_clean != "." else ""
 
 
 def rip_audio_files(
