@@ -45,6 +45,11 @@ def load_config(config_path: str) -> dict[str, CreatorConfig]:
     return config
 
 
+def verify_audio_file(audio_file_path: str) -> bool:
+    """Verify that the audio file is greater than 1 MB"""
+    return os.path.getsize(audio_file_path) > 10**6
+
+
 def rip_audio_files(
     audio_dir: str,
     transcripts_dir: str,
@@ -70,14 +75,17 @@ def rip_audio_files(
         with open(shorts_path, "r", encoding="utf-8") as f:
             short_video_files = {x.strip() for x in f.readlines()}
 
+    all_audio = {file for file in os.listdir(audio_dir)}
+
+    # delete small audio files
+    small_audio = {file for file in all_audio if not verify_audio_file(file)}
+
+    for file in small_audio:
+        os.remove(os.path.join(audio_dir, file))
+
     # create a list of audio files that already exist and is > 1 mb
-    audio_files: set[str] = {
-        file.removesuffix(".mp3")
-        for file in os.listdir(audio_dir)
-        if (
-            file.endswith(".mp3")
-            and os.path.getsize(os.path.join(audio_dir, file)) > 1000000
-        )
+    existing_audio: set[str] = {
+        file.removesuffix(".mp3") for file in all_audio - small_audio
     }
 
     # create a list of transcripts that already exist and are > 1 kb
@@ -88,7 +96,7 @@ def rip_audio_files(
         and os.path.getsize(os.path.join(transcripts_dir, file)) > 1000
     }
 
-    skip_files = audio_files.union(transcript_files, short_video_files)
+    skip_files = existing_audio.union(transcript_files, short_video_files)
 
     vids: list[pytube.YouTube] = []
 
