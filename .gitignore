@@ -12,3 +12,4 @@ __pycache__
 /env/prod.env
 /added.txt
 /added/
+/queries/

@@ -1,22 +1,37 @@
+import asyncio
 import os
 import threading
 import time
+from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
-from typing import Literal
 
 import numpy as np
 import numpy.typing as npt
 import uvicorn
 from fastapi import FastAPI, Response
-from qdrant_client import QdrantClient
+from qdrant_client import AsyncQdrantClient
 from sentence_transformers import SentenceTransformer
 
 from gRPC.server import serve as grpc_server
 from services.record_funcs import calculate_record_file_checksums, split_record_file
-from web_server.src.qdrant_funcs import add_to_qdrant, query_qdrant
+from web_server.src.db_handler import (
+    fetch_phrase_id,
+    fetch_phrase_vector,
+    increment_hits,
+    init_db,
+    insert_phrase,
+)
+from web_server.src.qdrant_funcs import (
+    ModelDims,
+    add_to_qdrant,
+    initialize_qdrant,
+    q_types,
+    query_qdrant,
+)
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 EMBEDDINGS_DIR = os.path.join(ROOT, "server_embeddings")
+DB_PATH = os.path.join(ROOT, "queries", "queries.db")
 
 WORK_DIR = os.path.join(ROOT, "web_server", "src")
 QDRANT_DIR = os.path.join(WORK_DIR, "qdrant_data")
@@ -29,6 +44,8 @@ RECORD_DIR = os.path.join(STATIC_PATH, "added")
 
 SYM_DIM = 384
 ASYM_DIM = 384
+MODEL_DIMS: ModelDims = {"asymmetric": ASYM_DIM, "symmetric": SYM_DIM}
+
 REBUILD_COOLDOWN = timedelta(seconds=10)
 REBUILD_SLEEP = 60 * 5
 SHOW_STRIPE = os.getenv("SHOW_STRIPE") != "0" and os.getenv("SHOW_STRIPE") != None
@@ -54,18 +71,21 @@ EXISTING_CHANNELS = [
     "perun",
 ]
 
-fapi_app = FastAPI()
 last_grpc_call_time: datetime | None = datetime.now()
 last_index_rebuild: datetime | None = None
 lock = threading.Lock()
 
-# Load the SentenceTransformer model
-SYMMETRIC_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
-ASYMMETCIC_MODEL = SentenceTransformer("msmarco-MiniLM-L-6-v3")
+SYMMETRIC_MODEL: SentenceTransformer
+ASYMMETCIC_MODEL: SentenceTransformer
 
 
 # Start the Qdrant client
-qdant_client = QdrantClient(host="qdrant", grpc_port=6334, prefer_grpc=True)
+qdant_client = AsyncQdrantClient(host="qdrant", grpc_port=6334, prefer_grpc=True)
+
+
+def last_grpc_call_time_callback(*args, **kwargs):
+    global last_grpc_call_time
+    last_grpc_call_time = datetime.now()
 
 
 def update_qdrant():
@@ -91,11 +111,12 @@ def update_qdrant():
 
         if wait_seconds == 0:
             print("Updating Qdrant...")
-            add_to_qdrant(
-                EMBEDDINGS_DIR,
-                RECORD_DIR,
-                qdant_client,
-                {"asymmetric": ASYM_DIM, "symmetric": SYM_DIM},
+            asyncio.run(
+                add_to_qdrant(
+                    EMBEDDINGS_DIR,
+                    RECORD_DIR,
+                    qdant_client,
+                )
             )
             print("Qdrant updated.")
 
@@ -105,6 +126,38 @@ def update_qdrant():
                 last_grpc_call_time = None
 
         time.sleep(wait_seconds)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load the SentenceTransformer model
+    global SYMMETRIC_MODEL, ASYMMETCIC_MODEL
+    SYMMETRIC_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
+    ASYMMETCIC_MODEL = SentenceTransformer("msmarco-MiniLM-L-6-v3")
+    sqdb = init_db(DB_PATH)
+    qdrant = initialize_qdrant(MODEL_DIMS, qdant_client)
+
+    # Start the gRPC server thread
+    grpc_thread = threading.Thread(
+        target=grpc_server,
+        daemon=True,
+        kwargs={
+            "embeddings_dir": EMBEDDINGS_DIR,
+            "callback": last_grpc_call_time_callback,
+        },
+    )
+    grpc_thread.start()
+
+    # Start the rebuild index thread
+    await asyncio.gather(sqdb, qdrant)
+    rebuild_thread = threading.Thread(target=update_qdrant, daemon=True)
+    rebuild_thread.start()
+
+    yield  # Start the web server
+    # Clean up before shutting down
+
+
+fapi_app = FastAPI(lifespan=lifespan)
 
 
 if SHOW_STRIPE:
@@ -124,7 +177,7 @@ else:
 async def search(
     query: str | None = None,
     channels: str | None = None,
-    q_type: Literal["sym", "asym"] = "sym",
+    q_type: q_types = "sym",
 ):
     parsed_channels = ["based_camp"]
     if not query:
@@ -139,14 +192,25 @@ async def search(
     if len(query) > 100:
         query = query[:100]
 
-    search_vector: npt.NDArray[np.float32] = (
-        SYMMETRIC_MODEL.encode(query)
-        if q_type == "sym"
-        else ASYMMETCIC_MODEL.encode(query)
-    )  # type: ignore
+    query = query.strip()
 
-    results = query_qdrant(parsed_channels, search_vector, qdant_client, q_type)
+    search_vector: npt.NDArray[np.float32] | None = None
+    search_id = await fetch_phrase_id(query, q_type, DB_PATH)
+    if search_id is not None:
+        search_vector = await fetch_phrase_vector(search_id, q_type, qdant_client)
 
+    if search_vector is None:
+        model = SYMMETRIC_MODEL if q_type == "sym" else ASYMMETCIC_MODEL
+        search_vector = model.encode(query)  # type: ignore
+        await insert_phrase(query, q_type, qdant_client, model, DB_PATH)
+
+    else:
+        await increment_hits(query, q_type, DB_PATH)
+
+    if search_vector is None:
+        return Response(status_code=500)
+
+    results = await query_qdrant(parsed_channels, search_vector, qdant_client, q_type)
     return {
         "channels": parsed_channels,
         "query": query,
@@ -167,23 +231,6 @@ async def latest_rebuild():
 async def added_hash():
     return calculate_record_file_checksums(RECORD_DIR)
 
-
-def last_grpc_call_time_callback(*args, **kwargs):
-    global last_grpc_call_time
-    last_grpc_call_time = datetime.now()
-
-
-# Start the rebuild index thread
-rebuild_thread = threading.Thread(target=update_qdrant, daemon=True)
-rebuild_thread.start()
-
-# Start the gRPC server thread
-grpc_thread = threading.Thread(
-    target=grpc_server,
-    daemon=True,
-    kwargs={"embeddings_dir": EMBEDDINGS_DIR, "callback": last_grpc_call_time_callback},
-)
-grpc_thread.start()
 
 # Serve the app with uvicorn
 uvicorn.run(fapi_app, host="0.0.0.0", port=8000)

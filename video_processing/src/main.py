@@ -97,29 +97,31 @@ def rip_audio_files(
 
     all_audio = {file for file in os.listdir(audio_dir) if file.endswith(".mp3")}
 
-    # delete small audio files
+    # get small audio files
     small_audio = {
         file
         for file in all_audio
         if not verify_audio_file(os.path.join(audio_dir, file))
     }
-    for file in small_audio:
-        os.remove(os.path.join(audio_dir, file))
 
-    # add small audio to short video file
+    # add small audio to shorts file
     if small_audio:
         with open(shorts_path, "a", encoding="utf-8") as f:
             f.write("\n".join([x.removesuffix(".mp3") for x in small_audio]) + "\n")
 
-    # get short video files
+    # get files in shorts file
     short_video_files: set[str] = set()
     with open(shorts_path, "r", encoding="utf-8") as f:
         short_video_files = {x.strip() for x in f.readlines()}
 
+    # delete audio that are in the shorts file
+    for file in short_video_files:
+        path = os.path.join(audio_dir, file + ".mp3")
+        if os.path.exists(path):
+            os.remove(path)
+
     # create a list of audio files that already exist and is > 1 mb
-    existing_audio: set[str] = {
-        file.removesuffix(".mp3") for file in all_audio - small_audio
-    }
+    existing_audio: set[str] = {file.removesuffix(".mp3") for file in all_audio}
 
     # create a list of transcripts that already exist and are > 1 kb
     transcript_files: set[str] = {

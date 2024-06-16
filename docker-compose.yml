@@ -6,7 +6,7 @@ services:
     command: python3 server.py
     volumes:
       - ./server_embeddings/:/src/server_embeddings/
-      - ./web_server/src/saved/:/src/web_server/src/saved/
+      - ./queries:/src/queries
       - ./web_server/src/static/:/src/web_server/src/static/
     env_file:
       - path: ./env/dev.env

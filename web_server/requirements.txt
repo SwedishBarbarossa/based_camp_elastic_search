@@ -5,3 +5,4 @@ sentence-transformers
 grpcio
 grpcio-tools
 qdrant-client
+aiosqlite
