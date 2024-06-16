@@ -1,0 +1,10 @@
+[MASTER]
+ignore-patterns=
+    /transcriptions/**,
+    /embeddings/**,
+    /server_embeddings/**,
+    /audio/**,
+    /nginx_cache/**,
+    /qdrant_storage/**,
+    /added/**,
+    /.venv/**
