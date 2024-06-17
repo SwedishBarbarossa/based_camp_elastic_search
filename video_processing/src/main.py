@@ -65,7 +65,7 @@ def verify_transcript_file(transcript_file_path: str) -> bool:
 
 def clean_segment_text(text: str) -> str:
     """Clean transcription segment text"""
-    base_clean = text.replace("\n", " ").replace("¶", " ").strip()
+    base_clean = text.replace("\n", " ").replace("¶", " ").replace("¦", " ").strip()
     while "  " in base_clean:
         base_clean = base_clean.replace("  ", " ")
     return base_clean if base_clean != "." else ""
