@@ -197,6 +197,8 @@ def rip_audio_files(
 
             with open(age_restricted_path, "a", encoding="utf-8") as f:
                 f.write(f"{video_id}\n")
+        except pytube.exceptions.LiveStreamError:
+            continue
         except Exception as e:
             print(f"Error downloading {video_id}")
             raise e
