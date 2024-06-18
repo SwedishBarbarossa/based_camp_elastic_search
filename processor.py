@@ -47,6 +47,7 @@ if __name__ == "__main__":
             if file not in previously_uploaded_files
         ]
         if to_upload:
+            print(f"\nUploading {len(to_upload)} embeddings")
             embeddings: dict[str, npt.NDArray[np.float32]] = {}
             for filename, embedding_path in tqdm(
                 to_upload, desc="Preparing embeddings"
