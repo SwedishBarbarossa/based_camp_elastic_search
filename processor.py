@@ -53,9 +53,9 @@ if __name__ == "__main__":
             ):
                 try:
                     arr = np.load(embedding_path)
+                    embeddings[filename.removesuffix(".npy")] = arr
                 except:  # delete corrupted files
                     os.remove(embedding_path)
-                embeddings[filename.removesuffix(".npy")] = arr
 
             p_bar = tqdm(to_upload)
 
