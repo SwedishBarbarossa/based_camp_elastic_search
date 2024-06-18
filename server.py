@@ -69,6 +69,7 @@ EXISTING_CHANNELS = [
     "ryan_chapman",
     "veritasium",
     "perun",
+    "lennys_podcast",
 ]
 
 last_grpc_call_time: datetime | None = datetime.now()
