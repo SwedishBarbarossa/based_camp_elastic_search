@@ -1,3 +1,8 @@
 User-agent: *
 Disallow: /*
 Allow: /$
+Allow: /style.css$
+Allow: /scripts.js$
+Allow: /donate_url$
+Allow: /?search=this+is+a+sample+search+for+semantic+similarity$
+Allow: /search/?query=this%20is%20a%20sample%20search%20for%20semantic%20similarity&q_type=sym$
