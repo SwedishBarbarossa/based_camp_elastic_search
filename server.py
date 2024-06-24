@@ -182,7 +182,7 @@ async def search(
 ):
     parsed_channels = ["based_camp"]
     if not query:
-        query = "Hello! Today we are talking about"
+        query = "What is semantic similarity?"
 
     if channels:
         parsed_channels = [x for x in channels.split(",") if x in EXISTING_CHANNELS]
@@ -193,7 +193,7 @@ async def search(
     if len(query) > 100:
         query = query[:100]
 
-    query = query.strip()
+    query = query.strip().lower()
 
     search_vector: npt.NDArray[np.float32] | None = None
     search_id = await fetch_phrase_id(query, q_type, DB_PATH)
