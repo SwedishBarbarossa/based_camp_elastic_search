@@ -153,6 +153,7 @@ async function search() {
 
     // Get query from the search bar
     let query = document.getElementById('search-field').value;
+    let query_was_empty = query === '';
 
     // Get type of search
     let q_type = getSearchType();
@@ -171,7 +172,7 @@ async function search() {
     const channels_string = selected_channels.join(",");
     let response = await fetch(`/search/?query=${query}&channels=${channels_string}&q_type=${q_type}`);
 
-    // If response is not ok, show 
+    // If response is not ok, show error
     if (!response.ok) {
         document.getElementById('loading-spinner').style.display = 'none';
         document.getElementById('error-message').style.display = 'block';
@@ -179,6 +180,13 @@ async function search() {
     }
 
     let data = await response.json();
+
+    // If search was blank, set to the returned search query and query type
+    if (query_was_empty) {
+        document.getElementById('search-field').value = data.query;
+        document.getElementById('sym-search').checked = data.q_type === 'sym';
+        document.getElementById('asym-search').checked = data.q_type === 'asym';
+    }
 
     // Parse results
     let segments = Object.keys(data.results).map(idx => {
