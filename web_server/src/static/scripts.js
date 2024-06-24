@@ -19,7 +19,8 @@ const channels = [ /* [Channel ID, Channel Name, Channel Type] */
     ["perun", "Perun", "war"],
     ["lennys_podcast", "Lenny's Podcast", "business"],
     ["big_think", "Big Think", "misc"],
-    ["freethink", "Freethink", "misc"]
+    ["freethink", "Freethink", "misc"],
+    ["diary_of_a_ceo", "Diary of a CEO", "misc"]
 ];
 
 function buildChannelList() {
