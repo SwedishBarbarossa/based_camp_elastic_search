@@ -244,6 +244,9 @@ def transcribe_audio_files(
     get_segments: Callable[[str], AlignedTranscriptionResult],
     end_time: float,
 ):
+    os.makedirs(audio_dir, exist_ok=True)
+    os.makedirs(transcripts_dir, exist_ok=True)
+
     # create a list of audio files that already exist and is > 1 mb
     audio_files: set[str] = {
         file.removesuffix(".mp3")
