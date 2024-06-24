@@ -95,3 +95,9 @@ creators:
   lennys_podcast:
     youtube_playlists:
       - link: "https://www.youtube.com/playlist?list=PL2fLjt2dG0N6unOOF3nHWYGcJJIQR1NKm"
+  big_think:
+    youtube_channels:
+      - link: "https://www.youtube.com/channel/UCvQECJukTDE2i6aCoMnS-Vg"
+  freethink:
+    youtube_channels:
+      - link: "https://www.youtube.com/channel/UConJDkGk921yT9hISzFqpzw"

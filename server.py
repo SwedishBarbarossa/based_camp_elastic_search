@@ -70,6 +70,8 @@ EXISTING_CHANNELS = [
     "veritasium",
     "perun",
     "lennys_podcast",
+    "big_think",
+    "freethink",
 ]
 
 last_grpc_call_time: datetime | None = datetime.now()

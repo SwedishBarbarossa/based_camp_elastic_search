@@ -17,7 +17,9 @@ const channels = [ /* [Channel ID, Channel Name, Channel Type] */
     ["ryan_chapman", "Ryan Chapman", "ideology"],
     ["veritasium", "Veritasium", "science"],
     ["perun", "Perun", "war"],
-    ["lennys_podcast", "Lenny's Podcast", "business"]
+    ["lennys_podcast", "Lenny's Podcast", "business"],
+    ["big_think", "Big Think", "misc"],
+    ["freethink", "Freethink", "misc"]
 ];
 
 function buildChannelList() {
