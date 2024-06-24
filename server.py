@@ -182,7 +182,8 @@ async def search(
 ):
     parsed_channels = ["based_camp"]
     if not query:
-        query = "What is semantic similarity?"
+        query = "How does text retrieval with embeddings work?"
+        q_type = "asym"
 
     if channels:
         parsed_channels = [x for x in channels.split(",") if x in EXISTING_CHANNELS]
