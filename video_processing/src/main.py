@@ -130,7 +130,9 @@ def rip_audio_files(
         if verify_transcript_file(os.path.join(transcripts_dir, file))
     }
 
-    skip_files = existing_audio.union(transcript_files, short_video_files)
+    skip_files = existing_audio.union(
+        transcript_files, short_video_files, age_restricted
+    )
 
     vids: list[pytube.YouTube] = []
 
@@ -139,8 +141,9 @@ def rip_audio_files(
         try:
             for playlist in playlists:
                 link = playlist["link"]
-                playlist = pytube.Playlist(link)
+                playlist = pytube.Playlist(link, use_oauth=True, allow_oauth_cache=True)
                 vids.extend(list(playlist.videos))
+                time.sleep(10)
         except Exception as e:
             print("Failed to load playlist")
             raise e
@@ -150,8 +153,9 @@ def rip_audio_files(
         try:
             for channel in channels:
                 link = channel["link"]
-                channel = pytube.Channel(link)
+                channel = pytube.Channel(link, use_oauth=True, allow_oauth_cache=True)
                 vids.extend(list(channel.videos))
+                time.sleep(10)
         except Exception as e:
             print("Failed to load channel")
             raise e
@@ -161,8 +165,9 @@ def rip_audio_files(
         try:
             for video in videos:
                 link = video["link"]
-                video = pytube.YouTube(link)
+                video = pytube.YouTube(link, use_oauth=True, allow_oauth_cache=True)
                 vids.append(video)
+                time.sleep(2)
         except Exception as e:
             print("Failed to load video")
             raise e
@@ -176,20 +181,22 @@ def rip_audio_files(
     if not vids:
         return
 
-    for video in tqdm(vids):
+    pbar = tqdm(vids)
+    for video in pbar:
         if time.time() > end_time:
             break
 
         # save video audio
         video_id = video.video_id
         try:
+            video.bypass_age_gate()
             audio_obj = video.streams.get_audio_only()
             if not audio_obj:
                 raise ValueError("No audio stream found")
 
-            audio_obj.download(
-                output_path=audio_dir, filename=f"{video_id}.mp3", skip_existing=True
-            )
+            audio_obj.download(output_path=audio_dir, filename=f"{video_id}.mp3")
+            pbar.set_description(f"Downloaded {video_id}")
+            time.sleep(10)
         except pytube.exceptions.AgeRestrictedError:
             # add to list to download later
             if video_id in age_restricted:
@@ -197,7 +204,12 @@ def rip_audio_files(
 
             with open(age_restricted_path, "a", encoding="utf-8") as f:
                 f.write(f"{video_id}\n")
+
+            pbar.set_description(f"Age restricted {video_id}")
+            time.sleep(1)
         except pytube.exceptions.LiveStreamError:
+            pbar.set_description(f"Live stream {video_id}")
+            time.sleep(1)
             continue
         except Exception as e:
             print(f"Error downloading {video_id}")
