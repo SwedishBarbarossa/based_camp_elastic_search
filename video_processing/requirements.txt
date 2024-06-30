@@ -6,3 +6,4 @@ grpcio
 grpcio-tools
 python-dotenv
 whisperx @ git+https://github.com/m-bain/whisperX@main
+yt-dlp

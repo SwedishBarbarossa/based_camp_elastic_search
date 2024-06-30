@@ -12,6 +12,7 @@ import requests
 import torch
 import whisperx
 import yaml
+import yt_dlp
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 from whisperx.alignment import AlignedTranscriptionResult
@@ -69,6 +70,37 @@ def clean_segment_text(text: str) -> str:
     while "  " in base_clean:
         base_clean = base_clean.replace("  ", " ")
     return base_clean if base_clean != "." else ""
+
+
+def download_audio_with_yt_dlp(video_url: str, audio_dir: str) -> bool:
+    """Backup ripper when pytube doesn't work"""
+    # Extract the video ID from the URL
+    video_id = video_url.split("v=")[-1]
+    # Define the output template using the video ID
+    output_template = f"{video_id}.%(ext)s"
+    output_path = os.path.join(audio_dir, output_template)
+
+    # Options for yt-dlp
+    ydl_opts = {
+        "format": "bestaudio/best",
+        "outtmpl": output_path,
+        "postprocessors": [
+            {
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "mp3",
+                "preferredquality": "192",
+            }
+        ],
+    }
+
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([video_url])
+        # Check if the file was created
+        return os.path.exists(f"{video_id}.mp3")
+    except Exception as e:
+        print(f"Error downloading {video_url}: {e}")
+        return False
 
 
 def rip_audio_files(
@@ -198,6 +230,11 @@ def rip_audio_files(
             pbar.set_description(f"Downloaded {video_id}")
             time.sleep(10)
         except pytube.exceptions.AgeRestrictedError:
+            if download_audio_with_yt_dlp(video.watch_url, audio_dir):
+                pbar.set_description(f"yt-dlp - Downloaded {video_id}")
+                time.sleep(10)
+                continue
+
             # add to list to download later
             if video_id in age_restricted:
                 continue
@@ -212,6 +249,11 @@ def rip_audio_files(
             time.sleep(1)
             continue
         except Exception as e:
+            if download_audio_with_yt_dlp(video.watch_url, audio_dir):
+                pbar.set_description(f"yt-dlp - Downloaded {video_id}")
+                time.sleep(10)
+                continue
+
             print(f"Error downloading {video_id}")
             raise e
 
