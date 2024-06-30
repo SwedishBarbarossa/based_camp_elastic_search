@@ -78,12 +78,13 @@ def download_audio_with_yt_dlp(video_url: str, audio_dir: str) -> bool:
     video_id = video_url.split("v=")[-1]
     # Define the output template using the video ID
     output_template = f"{video_id}.%(ext)s"
-    output_path = os.path.join(audio_dir, output_template)
+    output_path_template = os.path.join(audio_dir, output_template)
+    output_path = os.path.join(audio_dir, f"{video_id}.mp3")
 
     # Options for yt-dlp
     ydl_opts = {
         "format": "bestaudio/best",
-        "outtmpl": output_path,
+        "outtmpl": output_path_template,
         "postprocessors": [
             {
                 "key": "FFmpegExtractAudio",
@@ -91,15 +92,16 @@ def download_audio_with_yt_dlp(video_url: str, audio_dir: str) -> bool:
                 "preferredquality": "192",
             }
         ],
+        "verbose": False,
+        "quiet": True,
     }
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([video_url])
-        # Check if the file was created
-        return os.path.exists(f"{video_id}.mp3")
-    except Exception as e:
-        print(f"Error downloading {video_url}: {e}")
+
+        return os.path.exists(output_path)
+    except Exception:
         return False
 
 
@@ -588,6 +590,7 @@ def main(record_dir: str, rip=False) -> set[str]:
     def transcribe_audio_file(audio_file_path: str) -> AlignedTranscriptionResult:
         """Transcription hook"""
         audio = whisperx.load_audio(audio_file_path)
+        time.sleep(1)
         result = model.transcribe(audio, batch_size=16, language="en")
         cleaned_segments = []
         for segment in result["segments"]:
@@ -598,6 +601,7 @@ def main(record_dir: str, rip=False) -> set[str]:
 
             cleaned_segments.append(x)
 
+        time.sleep(1)
         return whisperx.align(
             cleaned_segments,
             model_a,
