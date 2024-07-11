@@ -3,7 +3,7 @@ import re
 import subprocess
 import time
 from traceback import print_tb
-from typing import Callable, TypedDict
+from typing import Callable, Generator, Iterable, TypedDict
 
 import numpy as np
 import pytube
@@ -130,6 +130,7 @@ def rip_audio_files(
         age_restricted = {x.strip() for x in f.readlines()}
 
     all_audio = {file for file in os.listdir(audio_dir) if file.endswith(".mp3")}
+    current_audio_count = len(all_audio)
 
     # get small audio files
     small_audio = {
@@ -168,7 +169,7 @@ def rip_audio_files(
         transcript_files, short_video_files, age_restricted
     )
 
-    vids: list[pytube.YouTube] = []
+    vid_sources = []
 
     playlists = config.get("youtube_playlists")
     if playlists:
@@ -176,8 +177,8 @@ def rip_audio_files(
             for playlist in playlists:
                 link = playlist["link"]
                 playlist = pytube.Playlist(link, use_oauth=True, allow_oauth_cache=True)
-                vids.extend(list(playlist.videos))
-                time.sleep(10)
+                vid_sources.append(playlist.videos)
+                time.sleep(2)
         except Exception as e:
             print("Failed to load playlist")
             raise e
@@ -188,34 +189,47 @@ def rip_audio_files(
             for channel in channels:
                 link = channel["link"]
                 channel = pytube.Channel(link, use_oauth=True, allow_oauth_cache=True)
-                vids.extend(list(channel.videos))
-                time.sleep(10)
+                vid_sources.append(channel.videos)
+                time.sleep(2)
         except Exception as e:
             print("Failed to load channel")
             raise e
 
     videos = config.get("youtube_videos")
     if videos:
+        video_list: list[pytube.YouTube] = []
         try:
             for video in videos:
                 link = video["link"]
                 video = pytube.YouTube(link, use_oauth=True, allow_oauth_cache=True)
-                vids.append(video)
+                video_list.append(video)
                 time.sleep(2)
         except Exception as e:
             print("Failed to load video")
             raise e
+        vid_sources.append(video_list)
 
-    # remove duplicate videos
-    vids_dict: dict[str, pytube.YouTube] = {
-        video.video_id: video for video in vids if video.video_id not in skip_files
-    }
-    vids = list(vids_dict.values())
-    vids_dict = {}
-    if not vids:
-        return
+    def video_generator(
+        sources: list[Iterable[pytube.YouTube]], skip: set[str]
+    ) -> Generator[pytube.YouTube, None, None]:
+        returned: set[str] = skip
+        for video_li in sources:
+            success = False
+            while not success:
+                try:
+                    for vid in video_li:
+                        time.sleep(0.5)
+                        if vid.video_id in returned:
+                            continue
 
-    pbar = tqdm(vids)
+                        returned.add(vid.video_id)
+                        yield vid
+                    success = True
+                except Exception as e:
+                    print(e)
+                    time.sleep(5)
+
+    pbar = tqdm(video_generator(vid_sources, skip_files))
     for video in pbar:
         if time.time() > end_time:
             break
@@ -245,10 +259,8 @@ def rip_audio_files(
                 f.write(f"{video_id}\n")
 
             pbar.set_description(f"Age restricted {video_id}")
-            time.sleep(1)
         except pytube.exceptions.LiveStreamError:
             pbar.set_description(f"Live stream {video_id}")
-            time.sleep(1)
             continue
         except Exception as e:
             if download_audio_with_yt_dlp(video.watch_url, audio_dir):
@@ -344,7 +356,13 @@ def transcribe_audio_files(
 
         duration = _get_media_duration(os.path.join(audio_dir, filename + ".mp3"))
         p_bar.set_description(f"{filename} [{duration}]")
-        result = get_segments(audio_path)
+
+        try:
+            result = get_segments(audio_path)
+        except Exception as e:
+            print(f"Error transcribing {filename}: {e}")
+            time.sleep(5)
+            continue
 
         cleaned_segments = [
             segment
@@ -573,7 +591,7 @@ def main(record_dir: str, rip=False) -> set[str]:
     )
     age_restricted_path = os.path.join(audio_dir, "age_restricted.txt")
     shorts_path = os.path.join(audio_dir, "shorts.txt")
-    END_TIME = time.time() + 2.5 * 60 * 60
+    END_TIME = time.time() + 5.5 * 60 * 60
 
     # Load the Whisper model
     # You can choose another model size as needed
@@ -591,7 +609,7 @@ def main(record_dir: str, rip=False) -> set[str]:
         """Transcription hook"""
         audio = whisperx.load_audio(audio_file_path)
         time.sleep(1)
-        result = model.transcribe(audio, batch_size=16, language="en")
+        result = model.transcribe(audio, batch_size=12, language="en")
         cleaned_segments = []
         for segment in result["segments"]:
             x = segment
@@ -628,6 +646,15 @@ def main(record_dir: str, rip=False) -> set[str]:
 
         creator_audio_dir = os.path.join(audio_dir, creator)
         creator_transcripts_dir = os.path.join(transcripts_dir, creator)
+        if transcribe_audio:
+            print(f"Transcribing {creator} audio files...")
+            transcribe_audio_files(
+                creator_audio_dir,
+                creator_transcripts_dir,
+                transcribe_audio_file,
+                END_TIME,
+            )
+
         if rip_audio:
             print(f"Ripping {creator} audio files...")
             try:

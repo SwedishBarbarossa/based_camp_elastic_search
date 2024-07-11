@@ -104,6 +104,6 @@ creators:
   iai:
     youtube_channels:
       - link: "https://www.youtube.com/channel/UCTsiZiMomJo6FOyiBaFeaIw"
-  big_think: # something about this channel causes most videos to raise errors on download
+  big_think:
     youtube_channels:
       - link: "https://www.youtube.com/channel/UCvQECJukTDE2i6aCoMnS-Vg"
