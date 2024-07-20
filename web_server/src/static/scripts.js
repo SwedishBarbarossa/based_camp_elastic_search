@@ -22,6 +22,7 @@ const channels = [ /* [Channel ID, Channel Name, Channel Type] */
     ["freethink", "Freethink", "misc"],
     ["diary_of_a_ceo", "Diary of a CEO", "misc"],
     ["iai", "The Institute of Art and Ideas", "misc"]
+    ["phil_illy", "Phil Illy", "misc"]
 ];
 
 function buildChannelList() {

@@ -74,6 +74,7 @@ EXISTING_CHANNELS = [
     "freethink",
     "diary_of_a_ceo",
     "iai",
+    "phil_illy",
 ]
 
 last_grpc_call_time: datetime | None = datetime.now()
