@@ -237,7 +237,6 @@ def rip_audio_files(
         # save video audio
         video_id = video.video_id
         try:
-            video.bypass_age_gate()
             audio_obj = video.streams.get_audio_only()
             if not audio_obj:
                 raise ValueError("No audio stream found")
@@ -261,6 +260,9 @@ def rip_audio_files(
             pbar.set_description(f"Age restricted {video_id}")
         except pytube.exceptions.LiveStreamError:
             pbar.set_description(f"Live stream {video_id}")
+            continue
+        except pytube.exceptions.MembersOnly:
+            pbar.set_description(f"Members only {video_id}")
             continue
         except Exception as e:
             if download_audio_with_yt_dlp(video.watch_url, audio_dir):
