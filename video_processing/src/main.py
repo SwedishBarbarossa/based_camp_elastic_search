@@ -409,7 +409,9 @@ def _split_long_segments(
     return first_half + second_half
 
 
-def encode_transcripts(transcripts_dir: str, embeddings_dir: str, channel: str):
+def encode_transcripts(
+    transcripts_dir: str, records_dir: str, embeddings_dir: str, channel: str
+):
     if not os.path.exists(transcripts_dir):
         return
 
@@ -491,6 +493,11 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str, channel: str):
     # Encode the segments and save the .npy file
     channel_embeddings_dir = os.path.join(embeddings_dir, channel)
     os.makedirs(channel_embeddings_dir, exist_ok=True)
+    uploaded_embeddings: set[str] = set()
+    for file in os.listdir(records_dir):
+        with open(os.path.join(records_dir, file), "r", encoding="utf-8") as f:
+            uploaded_embeddings |= set([x.strip() for x in f.readlines()])
+
     existing_embeddings = set(
         [
             filename
@@ -499,6 +506,7 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str, channel: str):
             if filename.endswith(".npy")
         ]
     )
+    skip_embeddings = uploaded_embeddings | existing_embeddings
     video_ids = set([segment[0] for segment in segments])
     for video_id in video_ids:
         os.makedirs(os.path.join(channel_embeddings_dir, video_id), exist_ok=True)
@@ -506,8 +514,8 @@ def encode_transcripts(transcripts_dir: str, embeddings_dir: str, channel: str):
     segments_to_encode = [
         (video_id, segment_name, text)
         for video_id, segment_name, text in segments
-        if f"sym {channel} {video_id} {segment_name}.npy" not in existing_embeddings
-        and f"asym {channel} {video_id} {segment_name}.npy" not in existing_embeddings
+        if f"sym {channel} {video_id} {segment_name}.npy" not in skip_embeddings
+        and f"asym {channel} {video_id} {segment_name}.npy" not in skip_embeddings
     ]
 
     for video_id, segment_name, text in tqdm(segments_to_encode):
@@ -588,6 +596,7 @@ def main(record_dir: str, rip=False) -> set[str]:
     audio_dir = os.path.join(root, "audio")
     transcripts_dir = os.path.join(root, "transcriptions")
     embeddings_dir = os.path.join(root, "embeddings")
+    records_dir = os.path.join(root, "added")
     config_path = os.path.join(
         root, "video_processing", "config", "video_processing_config.yaml"
     )
@@ -683,7 +692,9 @@ def main(record_dir: str, rip=False) -> set[str]:
                 END_TIME,
             )
         print(f"Encoding {creator} transcripts...")
-        encode_transcripts(creator_transcripts_dir, embeddings_dir, creator)
+        encode_transcripts(
+            creator_transcripts_dir, records_dir, embeddings_dir, creator
+        )
 
     # return the previously uploaded files on the server
     return get_uploaded_files(record_dir)
