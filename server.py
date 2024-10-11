@@ -210,10 +210,10 @@ async def search(
     if search_vector is None:
         model = SYMMETRIC_MODEL if q_type == "sym" else ASYMMETCIC_MODEL
         search_vector = model.encode(query)  # type: ignore
-        await insert_phrase(query, q_type, qdant_client, model, DB_PATH)
+        nil = insert_phrase(query, q_type, qdant_client, model, DB_PATH)
 
     else:
-        await increment_hits(query, q_type, DB_PATH)
+        nil = increment_hits(query, q_type, DB_PATH)
 
     if search_vector is None:
         return Response(status_code=500)

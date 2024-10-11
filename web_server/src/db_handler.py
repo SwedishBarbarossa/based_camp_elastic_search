@@ -74,7 +74,7 @@ async def insert_phrase(
     if not isinstance(pk, int):
         raise ValueError(f"Invalid primary key: {pk}")
 
-    await qdrant_client.upload_points(
+    nil = qdrant_client.upload_points(
         collection_name=f"queries_{q_type}",
         points=[create_point(vector, pk)],  # type: ignore
     )
