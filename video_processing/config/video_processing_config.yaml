@@ -7,14 +7,20 @@
 # Format channels as "/c/{channel_name}", "/u/{channel_name}" or /channel/{channel_id} without "@"
 
 creators:
-  based_camp:
+  phil_illy:
+    youtube_channels:
+      - link: "https://www.youtube.com/channel/UCW4tuaGfJ7Jhw95Q0C0EPyQ" # 18
+  the_leftist_cooks:
+    youtube_channels:
+      - link: "https://www.youtube.com/channel/UC358urzyldvD78E9o2sR-Og" # 24
+  ryan_chapman:
+    youtube_channels:
+      - link: "https://www.youtube.com/channel/UC6FO-Up1-oLj5nNivCNHL-Q" # 40 videos
+  balaji_srinivasan: # 74 videos
     youtube_playlists:
-      - link: "https://www.youtube.com/watch?v=S9naHQAmrG4&list=PLg8R-fWRBuHEAFE0yEdkcjCij5PwvfHqH&pp=iAQB"
-  balaji_srinivasan:
-    youtube_playlists:
-      - link: "https://www.youtube.com/playlist?list=PLJg2RipiXz8qGn9xDs_sOYOayQmx1TckE"
-      - link: "https://www.youtube.com/playlist?list=PLUFeA6y-5sFnDkJjRD07BnHoRs1VjscfU"
-    youtube_videos:
+      - link: "https://www.youtube.com/playlist?list=PLJg2RipiXz8qGn9xDs_sOYOayQmx1TckE" # 10 videos
+      - link: "https://www.youtube.com/playlist?list=PLUFeA6y-5sFnDkJjRD07BnHoRs1VjscfU" # 45 videos
+    youtube_videos: #  19 videos
       - link: "https://youtu.be/VeH7qKZr0WI?si=vHecytQu6QCiVTzq"
       - link: "https://youtu.be/0QC1FK2_pqg?si=5pG8dxpCw1qy3rqZ"
       - link: "https://youtu.be/XW9mMcE7I7A?si=KSSQ27DlL8uagGzL"
@@ -34,79 +40,76 @@ creators:
       - link: "https://youtu.be/iir5J6Z3Z1Q?si=a0N0mBkTAaydazL1"
       - link: "https://youtu.be/tQpZSVCTZCo?si=VMNTnvDSjVgpMXNZ"
       - link: "https://youtu.be/75GMZWFnyeI?si=N0wR7YODsPHf2cQ4"
-  hormozis:
+  charter_cities_institute: # 126 videos
     youtube_channels:
-      - link: "https://www.youtube.com/channel/UCUyDOdBWhC1MCxEjC46d-zw"
-      - link: "https://www.youtube.com/channel/UCxCcu9pet4dljrBLf8R5nwA"
-      - link: "https://www.youtube.com/channel/UCZuY75gOI808Rqyr6LgxVww"
-  y_combinator:
-    youtube_channels:
-      - link: "https://www.youtube.com/c/ycombinator"
-  charter_cities_institute:
-    youtube_channels:
-      - link: "https://www.youtube.com/channel/UCesutT0yy4f0FDXwLr5TXhA"
+      - link: "https://www.youtube.com/channel/UCesutT0yy4f0FDXwLr5TXhA" # 120 videos
     youtube_playlists:
-      - link: "https://www.youtube.com/playlist?list=PL_AjRcms7EGNnPqgp4mcixI4QrnZV8vVp"
-  startup_societies_foundation:
-    youtube_channels:
-      - link: "https://www.youtube.com/channel/UC2_6_VxyW1ifu4RDjALPYPA"
-  free_cities_foundation:
-    youtube_channels:
-      - link: "https://www.youtube.com/channel/UCfRmCtbHzvcOq6V8i9pKBVQ"
+      - link: "https://www.youtube.com/playlist?list=PL_AjRcms7EGNnPqgp4mcixI4QrnZV8vVp" # 6 videos
   james_lindsay:
     youtube_playlists:
-      - link: "https://www.youtube.com/playlist?list=PL2hrUFtAPRXcqc-bYDcaulLId2d9EXYNy"
-  jordan_b_peterson:
+      - link: "https://www.youtube.com/playlist?list=PL2hrUFtAPRXcqc-bYDcaulLId2d9EXYNy" # 149
+  perun: # 162 videos
     youtube_playlists:
-      - link: "https://www.youtube.com/playlist?list=PL22J3VaeABQAbEeT04p5VmAOBmqw2kmxj"
-      - link: "https://www.youtube.com/playlist?list=PL22J3VaeABQCn5nTAx65NRlh1EsKD0UQD"
-      - link: "https://www.youtube.com/playlist?list=PL22J3VaeABQBlN8DUor7SKWCwSghcqlY5"
-      - link: "https://www.youtube.com/playlist?list=PL22J3VaeABQAppIsV0MmKYhGeFGJsy-dS"
-      - link: "https://www.youtube.com/playlist?list=PL22J3VaeABQAbP8Fl9nB-yxu6YNfhUWtt"
-      - link: "https://www.youtube.com/playlist?list=PL22J3VaeABQA_4uQfPdSEhiNhQM236_O-"
-      - link: "https://www.youtube.com/playlist?list=PL22J3VaeABQD_IZs7y60I3lUrrFTzkpat"
-  chris_williamson:
-    youtube_playlists:
-      - link: "https://www.youtube.com/playlist?list=PLkL7BvJXiqSQu3i72hSrG4vUkDuaneHuB"
-  numberphile:
+      - link: "https://www.youtube.com/playlist?list=PLbCbj03gdsWwJgbFnyKZ0joiTZuZY_7Iq" # 5 videos
+      - link: "https://www.youtube.com/playlist?list=PLbCbj03gdsWw2q15_nFYqtdAEiQQ5lzP1" # 5 videos
+      - link: "https://www.youtube.com/playlist?list=PLbCbj03gdsWzhpuA0iZCjdwy5dgz8MKR0" # 10 videos
+      - link: "https://www.youtube.com/playlist?list=PLbCbj03gdsWwzqfbwspxqwJ_voSgkfTeS" # 11 videos
+      - link: "https://www.youtube.com/playlist?list=PLbCbj03gdsWwoCf33m8sS2EeirnIneM3n" # 30 videos
+      - link: "https://www.youtube.com/playlist?list=PLbCbj03gdsWwxEZNyy_b0aHKFgmVT3G-3" # 101 videos
+  free_cities_foundation:
     youtube_channels:
-      - link: "https://www.youtube.com/channel/UCoxcjq-8xIDTYp3uz647V5A"
-      - link: "https://www.youtube.com/channel/UCyp1gCHZJU_fGWFf2rtMkCg"
-  computerphile:
+      - link: "https://www.youtube.com/channel/UCfRmCtbHzvcOq6V8i9pKBVQ" # 170 videos
+  startup_societies_foundation:
     youtube_channels:
-      - link: "https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA"
-  ted:
-    youtube_channels:
-      - link: "https://www.youtube.com/channel/UCAuUUnT6oDeKwE6v1NGQxug"
-  ryan_chapman:
-    youtube_channels:
-      - link: "https://www.youtube.com/channel/UC6FO-Up1-oLj5nNivCNHL-Q"
-  veritasium:
-    youtube_channels:
-      - link: "https://www.youtube.com/channel/UCHnyfMqiRRG1u-2MsSQLbXA"
-  perun:
-    youtube_playlists:
-      - link: "https://www.youtube.com/playlist?list=PLbCbj03gdsWwJgbFnyKZ0joiTZuZY_7Iq"
-      - link: "https://www.youtube.com/playlist?list=PLbCbj03gdsWzhpuA0iZCjdwy5dgz8MKR0"
-      - link: "https://www.youtube.com/playlist?list=PLbCbj03gdsWwzqfbwspxqwJ_voSgkfTeS"
-      - link: "https://www.youtube.com/playlist?list=PLbCbj03gdsWw2q15_nFYqtdAEiQQ5lzP1"
-      - link: "https://www.youtube.com/playlist?list=PLbCbj03gdsWwoCf33m8sS2EeirnIneM3n"
-      - link: "https://www.youtube.com/playlist?list=PLbCbj03gdsWwxEZNyy_b0aHKFgmVT3G-3"
+      - link: "https://www.youtube.com/channel/UC2_6_VxyW1ifu4RDjALPYPA" # 186 videos
   lennys_podcast:
     youtube_playlists:
-      - link: "https://www.youtube.com/playlist?list=PL2fLjt2dG0N6unOOF3nHWYGcJJIQR1NKm"
-  freethink:
-    youtube_channels:
-      - link: "https://www.youtube.com/channel/UConJDkGk921yT9hISzFqpzw"
+      - link: "https://www.youtube.com/playlist?list=PL2fLjt2dG0N6unOOF3nHWYGcJJIQR1NKm" # 203
   diary_of_a_ceo:
     youtube_playlists:
-      - link: "https://www.youtube.com/playlist?list=PL22egh3ok4cP0T7UZRmP6TMLErZYWMN-l"
+      - link: "https://www.youtube.com/playlist?list=PL22egh3ok4cP0T7UZRmP6TMLErZYWMN-l" # 337
+  based_camp:
+    youtube_playlists:
+      - link: "https://www.youtube.com/watch?v=S9naHQAmrG4&list=PLg8R-fWRBuHEAFE0yEdkcjCij5PwvfHqH&pp=iAQB" # 386 videos
+  veritasium:
+    youtube_channels:
+      - link: "https://www.youtube.com/channel/UCHnyfMqiRRG1u-2MsSQLbXA" # 411
+  jordan_b_peterson: # 539
+    youtube_playlists:
+      - link: "https://www.youtube.com/playlist?list=PL22J3VaeABQAbEeT04p5VmAOBmqw2kmxj" # 333
+      - link: "https://www.youtube.com/playlist?list=PL22J3VaeABQCn5nTAx65NRlh1EsKD0UQD" # 46
+      - link: "https://www.youtube.com/playlist?list=PL22J3VaeABQBlN8DUor7SKWCwSghcqlY5" # 72
+      - link: "https://www.youtube.com/playlist?list=PL22J3VaeABQAppIsV0MmKYhGeFGJsy-dS" # 22
+      - link: "https://www.youtube.com/playlist?list=PL22J3VaeABQAbP8Fl9nB-yxu6YNfhUWtt" # 10
+      - link: "https://www.youtube.com/playlist?list=PL22J3VaeABQA_4uQfPdSEhiNhQM236_O-" # 39
+      - link: "https://www.youtube.com/playlist?list=PL22J3VaeABQD_IZs7y60I3lUrrFTzkpat" # 17
+  y_combinator:
+    youtube_channels:
+      - link: "https://www.youtube.com/c/ycombinator" # 659 videos
+  computerphile:
+    youtube_channels:
+      - link: "https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA" # 821
+  chris_williamson:
+    youtube_playlists:
+      - link: "https://www.youtube.com/playlist?list=PLkL7BvJXiqSQu3i72hSrG4vUkDuaneHuB" # 832
+  freethink:
+    youtube_channels:
+      - link: "https://www.youtube.com/channel/UConJDkGk921yT9hISzFqpzw" # 893
+  numberphile: # 981
+    youtube_channels:
+      - link: "https://www.youtube.com/channel/UCoxcjq-8xIDTYp3uz647V5A" # 743
+      - link: "https://www.youtube.com/channel/UCyp1gCHZJU_fGWFf2rtMkCg" # 238
+  hormozis:
+    youtube_channels:
+      - link: "https://www.youtube.com/channel/UCUyDOdBWhC1MCxEjC46d-zw" # 500 ish
+      - link: "https://www.youtube.com/channel/UCxCcu9pet4dljrBLf8R5nwA" # 500 ish
+      - link: "https://www.youtube.com/channel/UCZuY75gOI808Rqyr6LgxVww"
   iai:
     youtube_channels:
-      - link: "https://www.youtube.com/channel/UCTsiZiMomJo6FOyiBaFeaIw"
-  phil_illy:
+      - link: "https://www.youtube.com/channel/UCTsiZiMomJo6FOyiBaFeaIw" # 1.3k
+  ted:
     youtube_channels:
-      - link: "https://www.youtube.com/channel/UCW4tuaGfJ7Jhw95Q0C0EPyQ"
+      - link: "https://www.youtube.com/channel/UCAuUUnT6oDeKwE6v1NGQxug" # 4.8k
   big_think:
     youtube_channels:
-      - link: "https://www.youtube.com/channel/UCvQECJukTDE2i6aCoMnS-Vg"
+      - link: "https://www.youtube.com/channel/UCvQECJukTDE2i6aCoMnS-Vg" # 9.2k
