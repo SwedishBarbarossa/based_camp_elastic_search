@@ -21,6 +21,10 @@ from video_processing.src.main import main as processing
 
 if __name__ == "__main__":
     RIP_AUDIO_FILES = True if os.environ["RIP_AUDIO_FILES"] == "1" else False
+    TRANSCRIBE_AUDIO_FILES = (
+        True if os.environ["TRANSCRIBE_AUDIO_FILES"] == "1" else False
+    )
+    ENCODE_TRANSCRIPTS = True if os.environ["ENCODE_TRANSCRIPTS"] == "1" else False
     ADDED_RECORD = os.path.join(root, "added.txt")
     ADDED_RECORD_DIR = os.path.join(root, "added")
 
@@ -32,7 +36,10 @@ if __name__ == "__main__":
         START_TIME = time.time()
         print(f"Starting at {time.ctime()}\n--------------------------------------\n")
         previously_uploaded_files = processing(
-            rip=RIP_AUDIO_FILES, record_dir=ADDED_RECORD_DIR
+            record_dir=ADDED_RECORD_DIR,
+            rip=RIP_AUDIO_FILES,
+            transcribe=TRANSCRIBE_AUDIO_FILES,
+            encode=ENCODE_TRANSCRIPTS,
         )
         current_files: list[tuple[str, str]] = [
             (file, os.path.join(root, "embeddings", channel, video_id, file))

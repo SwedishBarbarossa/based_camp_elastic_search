@@ -591,7 +591,7 @@ def get_uploaded_files(record_dir: str) -> set[str]:
     return get_files_in_record(record_dir)
 
 
-def main(record_dir: str, rip=False) -> set[str]:
+def main(record_dir: str, rip=False, transcribe=False, encode=False) -> set[str]:
     root = os.path.dirname(os.path.abspath(__file__)).split("video_processing")[0]
     audio_dir = os.path.join(root, "audio")
     transcripts_dir = os.path.join(root, "transcriptions")
@@ -646,7 +646,8 @@ def main(record_dir: str, rip=False) -> set[str]:
         raise ValueError("Creator names cannot contain spaces")
 
     rip_audio = rip
-    transcribe_audio = rip
+    transcribe_audio = transcribe
+    encode_transcriptions = encode
     for i, (creator, creator_conf) in enumerate(config.items()):
         if END_TIME < time.time():
             break
@@ -691,10 +692,12 @@ def main(record_dir: str, rip=False) -> set[str]:
                 transcribe_audio_file,
                 END_TIME,
             )
-        print(f"Encoding {creator} transcripts...")
-        encode_transcripts(
-            creator_transcripts_dir, records_dir, embeddings_dir, creator
-        )
+
+        if encode_transcriptions:
+            print(f"Encoding {creator} transcripts...")
+            encode_transcripts(
+                creator_transcripts_dir, records_dir, embeddings_dir, creator
+            )
 
     # return the previously uploaded files on the server
     return get_uploaded_files(record_dir)
