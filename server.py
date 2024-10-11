@@ -75,6 +75,7 @@ EXISTING_CHANNELS = [
     "diary_of_a_ceo",
     "iai",
     "phil_illy",
+    "the_leftist_cooks",
 ]
 
 last_grpc_call_time: datetime | None = datetime.now()
