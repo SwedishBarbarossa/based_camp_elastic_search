@@ -1,5 +1,5 @@
 # Use the official Python image from the Docker Hub
-FROM python:3.12-slim
+FROM python:3.12-bullseye
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -11,23 +11,24 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /src
 
 # Install system dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential && \
+    # apt-get update && \
+    # apt-get install -y --no-install-recommends build-essential && \
     # Cleanup to keep the image small
-    apt-get autoremove -y && \
+RUN apt-get autoremove -y && \
     apt-get autoclean -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-
-RUN pip3 install --no-cache-dir wheel
-
-# Download the transformer models
-RUN pip3 install --no-cache-dir sentence-transformers
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2'); SentenceTransformer('msmarco-MiniLM-L-6-v3')"
+# RUN apk add cargo
+# RUN apt install curl
+# RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -y | sh
+# RUN apt remove curl -y && apt autoremove -y && apt autoclean -y
 
 # Install pip requirements
+RUN pip3 install --no-cache-dir wheel
+RUN pip3 install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 COPY web_server/requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2'); SentenceTransformer('msmarco-MiniLM-L-6-v3')"
 
 # Copy project
 COPY gRPC gRPC
