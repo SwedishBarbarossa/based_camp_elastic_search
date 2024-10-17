@@ -16,7 +16,9 @@ sudo apt autoremove -y
 sudo apt autoclean
 
 # Renew Let's Encrypt SSL certificate
-yes | certbot renew --cert-path ./web_server/certs --key-path ./web_server/certs --fullchain-path ./web_server/certs --chain-path ./web_server/certs
+yes | certbot renew
+# Copy to certs folder
+sudo cp -r /etc/letsencrypt/live/ytsearch.barbarossa.nu/* ./web_server/certs
 
 # Define the repository directory
 REPO_DIR="$HOME/based_camp_elastic_search"
