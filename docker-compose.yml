@@ -53,7 +53,7 @@ services:
   nginx-ssl:
     profiles:
       - ssl
-    image: nginx:stable-alpine
+    image: nginx:stable # -alpine  -- issues with reading certs
     volumes:
       - ./web_server/config/nginx_ssl.conf:/etc/nginx/nginx.conf:ro
       - ./web_server/src/static/:/app/static/:ro
