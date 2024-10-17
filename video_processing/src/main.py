@@ -60,7 +60,7 @@ def verify_transcript_file(transcript_file_path: str) -> bool:
     return (
         transcript_file_path.endswith(".txt")
         and os.path.exists(transcript_file_path)
-        and os.path.getsize(transcript_file_path) > 10**3
+        and os.path.getsize(transcript_file_path) > 10**2
     )
 
 
@@ -604,17 +604,22 @@ def main(record_dir: str, rip=False, transcribe=False, encode=False) -> set[str]
     shorts_path = os.path.join(audio_dir, "shorts.txt")
     END_TIME = time.time() + 5.5 * 60 * 60
 
+    rip_audio = rip
+    transcribe_audio = transcribe
+    encode_transcriptions = encode
+
     # Load the Whisper model
     # You can choose another model size as needed
-    has_cuda = torch.cuda.is_available()
-    device = "cuda" if has_cuda else "cpu"
-    model = whisperx.load_model(
-        "large-v3",
-        device=device,
-        compute_type="float16",
-        language="en",
-    )
-    model_a, metadata = whisperx.load_align_model(language_code="en", device=device)
+    if transcribe_audio:
+        has_cuda = torch.cuda.is_available()
+        device = "cuda" if has_cuda else "cpu"
+        model = whisperx.load_model(
+            "large-v3",
+            device=device,
+            compute_type="float16",
+            language="en",
+        )
+        model_a, metadata = whisperx.load_align_model(language_code="en", device=device)
 
     def transcribe_audio_file(audio_file_path: str) -> AlignedTranscriptionResult:
         """Transcription hook"""
@@ -645,9 +650,6 @@ def main(record_dir: str, rip=False, transcribe=False, encode=False) -> set[str]
     if any(" " in creator for creator in config.keys()):
         raise ValueError("Creator names cannot contain spaces")
 
-    rip_audio = rip
-    transcribe_audio = transcribe
-    encode_transcriptions = encode
     for i, (creator, creator_conf) in enumerate(config.items()):
         if END_TIME < time.time():
             break
