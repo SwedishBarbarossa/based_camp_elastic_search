@@ -88,6 +88,12 @@ ASYMMETCIC_MODEL: SentenceTransformer
 
 # Start the Qdrant client
 qdant_client = AsyncQdrantClient(host="qdrant", grpc_port=6334, prefer_grpc=True)
+threaded_qdrant_client = AsyncQdrantClient(
+    host="qdrant",
+    grpc_port=6334,
+    prefer_grpc=True,
+    force_disable_check_same_thread=True,
+)
 
 
 def last_grpc_call_time_callback(*args, **kwargs):
@@ -122,7 +128,7 @@ def update_qdrant():
                 add_to_qdrant(
                     EMBEDDINGS_DIR,
                     RECORD_DIR,
-                    qdant_client,
+                    threaded_qdrant_client,
                 )
             )
             print("Qdrant updated.")

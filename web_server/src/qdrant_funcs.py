@@ -203,12 +203,12 @@ async def _add_embeddings(
     """Add pointstructs to Qdrant"""
     asym_files = [x for x in files if x.startswith("asym")]
     asym_points = _files_to_pointstructs(asym_files, embeddings_dir)
-    one = client.upload_points(collection_name="asym", points=asym_points, wait=True)
+    one = client.upload_points(collection_name="asym", points=asym_points)
     add_embeddings_to_record(record_dir, asym_files)
 
     sym_files = [x for x in files if x.startswith("sym")]
     sym_points = _files_to_pointstructs(sym_files, embeddings_dir)
-    two = client.upload_points(collection_name="sym", points=sym_points, wait=True)
+    two = client.upload_points(collection_name="sym", points=sym_points)
     add_embeddings_to_record(record_dir, sym_files)
 
     await asyncio.gather(one, two)
